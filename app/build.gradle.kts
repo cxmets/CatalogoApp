@@ -41,38 +41,36 @@ android {
 
 dependencies {
 
+    // Compose UI core
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-text")
+    implementation("androidx.compose.foundation:foundation")
+
     implementation(libs.accompanist.systemuicontroller)
-
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.material3)
+    implementation(libs.ui)
 
-    implementation (libs.material3)
-    implementation (libs.ui)
-
-    // Dependências básicas
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.activity.compose)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.ui.text)
 
-    // Dependências de UI e Material
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+    implementation(libs.material.icons.extended)
 
-    // Dependência para carregamento de imagens (Coil)
-    implementation(libs.coil.compose) // Adicionada diretamente
+    implementation(libs.ui.graphics)
+    implementation(libs.ui.tooling.preview)
 
-    // Testes
+    implementation(libs.coil.compose)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // Dependências de testes do Compose
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.ui.test.junit4)
 
-    // Ferramentas de debug
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.ui.test.manifest)
 }

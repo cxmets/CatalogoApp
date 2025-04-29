@@ -1,6 +1,5 @@
 package com.comets.catalogo.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,28 +8,34 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color // Importar Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = Pink80,
+    // Opcional: Defina uma cor de fundo para o tema escuro se necessário,
+    // mas não deve ser branco puro para uma experiência de tema escuro adequada.
+    // background = Color(0xFF1C1B1F),
+    // surface = Color(0xFF1C1B1F),
+    // onBackground = Color.White,
+    // onSurface = Color.White,
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
-    tertiary = Pink40
+    tertiary = Pink40,
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    /* Other default colors to override */
+    background = Color.White, // <-- Mude AQUI para Color.White
+    surface = Color.White,    // <-- Opcional: Mude AQUI também se quiser o Surface branco
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onBackground = Color(0xFF1C1B1F), // Cor do texto sobre o fundo branco
+    onSurface = Color(0xFF1C1B1F),    // Cor do texto sobre a superfície branca
 )
 
 @Composable

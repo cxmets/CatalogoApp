@@ -22,7 +22,7 @@ object ProdutoRepository {
                 detalhes = "detalhes teste"
             ),
             Produto(
-                nome = "Retrovisor Cb 300",
+                nome = "Retrovisor Cb 300 Teste Texto",
                 descricao = "Retrovisor Cb 300",
                 categoria = "Retrovisores",
                 categoria2 = "Honda",
@@ -40,7 +40,7 @@ object ProdutoRepository {
                 detalhes = "detalhes teste"
             ),
             Produto(
-                nome = "Retrovisor Factor/Nmax",
+                nome = "Retrovisor Factor / Nmax",
                 descricao = "Retrovisor Factor / Nmax",
                 categoria = "Retrovisores",
                 categoria2 = "Yamaha",

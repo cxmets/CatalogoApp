@@ -21,6 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun ProdutoItem(produto: Produto, navController: NavController) {
@@ -33,9 +36,10 @@ fun ProdutoItem(produto: Produto, navController: NavController) {
         ) {
             Card(
                 modifier = Modifier
-                    .padding(7.dp) // padding padrão do Card
+                    .padding(7.dp)
                     .clickable {
-                        navController.navigate("detalhes/${produto.nome}")
+                        val encodedCodigo = URLEncoder.encode(produto.codigo, StandardCharsets.UTF_8.toString())
+                        navController.navigate("detalhes/$encodedCodigo")
                     },
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -60,7 +64,12 @@ fun ProdutoItem(produto: Produto, navController: NavController) {
             Text(
                 text = produto.nome,
                 fontSize = 15.sp,
-                modifier = Modifier.padding(bottom = 5.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // --> Corrigido: Use start, end e bottom padding
+                    .padding(start = 8.dp, end = 8.dp, bottom = 5.dp),
+                // Alternativa válida: .padding(horizontal = 8.dp).padding(bottom = 5.dp),
+                textAlign = TextAlign.Center
             )
         }
 
