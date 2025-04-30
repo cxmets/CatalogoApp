@@ -27,14 +27,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign // <-- Importar TextAlign
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.navigation.NavController // Importar NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetalhesProduto(produto: Produto, navController: NavController) {
+fun DetalhesProduto(produto: Produto, navController: NavController) { // Recebe NavController
     val context = LocalContext.current
     val assetManager = context.assets
 
@@ -51,7 +51,10 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        // Usar o NavController recebido
+                        navController.popBackStack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
@@ -76,7 +79,7 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight() // Mantido conforme sua preferência
-                    .background(Color.LightGray)
+                    .background(Color.LightGray) // Cor de fundo da área da imagem
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -84,6 +87,7 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
                         isImageOverlayVisible = true
                     }
             ) {
+                // O carregamento da imagem pode ser otimizado aqui no futuro
                 val inputStream = assetManager.open(produto.imagemUrl)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream.close()
@@ -101,7 +105,7 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth() // Garante que a coluna use toda a largura
+                    .fillMaxWidth()
                     .padding(16.dp)
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -109,7 +113,6 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
                 Text(
                     text = produto.nome,
                     fontSize = 24.sp,
-                    // --> Remover align, adicionar fillMaxWidth e textAlign
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
@@ -117,12 +120,10 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
                 Text(
                     text = produto.descricao,
                     fontSize = 16.sp,
-                    // --> Remover align, adicionar fillMaxWidth e textAlign
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // O texto de detalhes permanece alinhado à esquerda
                 Text(text = produto.detalhes, fontSize = 16.sp)
             }
         }
@@ -161,10 +162,12 @@ fun ZoomableImageOverlay(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.8f))
             .clickable {
+                // Fechar ao clicar fora da imagem, mas dentro do overlay
                 onDismiss()
             }
-            .pointerInput(Unit) {}
+            .pointerInput(Unit) {} // Impedir clicks de propagar para baixo
     ) {
+        // O carregamento da imagem pode ser otimizado aqui no futuro
         val inputStream = assetManager.open(imageUrl)
         val bitmap = BitmapFactory.decodeStream(inputStream)
         inputStream.close()
@@ -197,8 +200,9 @@ fun ZoomableImageOverlay(
                 }
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onDoubleTap = { tapOffset ->
-                            scale = if (scale > minScale) minScale else maxScale
+                        onDoubleTap = {
+                            // Resetar zoom e pan no double tap
+                            scale = minScale
                             offset = Offset.Zero
                         }
                     )

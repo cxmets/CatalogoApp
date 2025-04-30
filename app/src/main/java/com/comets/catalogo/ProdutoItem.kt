@@ -20,13 +20,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.navigation.NavController // Importar NavController
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import androidx.compose.ui.text.style.TextAlign
 
 @Composable
-fun ProdutoItem(produto: Produto, navController: NavController) {
+fun ProdutoItem(produto: Produto, navController: NavController) { // Recebe NavController
     val context = LocalContext.current
     val assetManager = context.assets
 
@@ -39,12 +39,14 @@ fun ProdutoItem(produto: Produto, navController: NavController) {
                     .padding(7.dp)
                     .clickable {
                         val encodedCodigo = URLEncoder.encode(produto.codigo, StandardCharsets.UTF_8.toString())
-                        navController.navigate("detalhes/$encodedCodigo")
+                        // Usar a constante de rota
+                        navController.navigate("${Routes.DETALHES_BASE}/$encodedCodigo")
                     },
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
+                // O carregamento da imagem pode ser otimizado aqui no futuro
                 val inputStream = assetManager.open(produto.imagemUrl)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream.close()
@@ -66,9 +68,7 @@ fun ProdutoItem(produto: Produto, navController: NavController) {
                 fontSize = 15.sp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // --> Corrigido: Use start, end e bottom padding
                     .padding(start = 8.dp, end = 8.dp, bottom = 5.dp),
-                // Alternativa válida: .padding(horizontal = 8.dp).padding(bottom = 5.dp),
                 textAlign = TextAlign.Center
             )
         }

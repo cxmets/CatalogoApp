@@ -22,7 +22,7 @@ object ProdutoRepository {
                 detalhes = "detalhes teste"
             ),
             Produto(
-                nome = "Retrovisor Cb 300 Teste Texto",
+                nome = "Retrovisor Cb 300",
                 descricao = "Retrovisor Cb 300",
                 categoria = "Retrovisores",
                 categoria2 = "Honda",
