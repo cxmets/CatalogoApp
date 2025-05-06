@@ -1,123 +1,99 @@
 package com.comets.catalogo
 
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults // Importar ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color // Importar Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import android.widget.Toast
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun TelaInicial(navController: NavController) {
     val context = LocalContext.current
-    val assetManager = context.assets
-    val isDarkTheme = isSystemInDarkTheme() // Verifica o tema atual
+    val isDarkTheme = isSystemInDarkTheme()
 
-    // Define o nome do arquivo de imagem com base no tema
-    val backgroundImageName = if (isDarkTheme) "Bd-dark.png" else "Bd-light.png"
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
 
-    // Carrega a imagem do asset
-    val inputStream = try {
-        assetManager.open(backgroundImageName)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null // Lidar com erro de carregamento, talvez mostrar um placeholder
+    // Calcular a cor customizada para o container dos botões manualmente
+    val customButtonContainerColor = if (isDarkTheme) {
+        // No tema escuro, tornar a cor ligeiramente mais clara
+        Color(
+            red = (backgroundColor.red + 0.15f).coerceIn(0f, 1f), // Aumenta Vermelho (clamp entre 0f e 1f)
+            green = (backgroundColor.green + 0.15f).coerceIn(0f, 1f), // Aumenta Verde
+            blue = (backgroundColor.blue + 0.15f).coerceIn(0f, 1f), // Aumenta Azul
+            alpha = backgroundColor.alpha // Mantém o alpha original
+        )
+    } else {
+        // No tema claro, tornar a cor ligeiramente mais escura
+        Color(
+            red = (backgroundColor.red - 0.15f).coerceIn(0f, 1f), // Diminui Vermelho
+            green = (backgroundColor.green - 0.15f).coerceIn(0f, 1f), // Diminui Verde
+            blue = (backgroundColor.blue - 0.15f).coerceIn(0f, 1f), // Diminui Azul
+            alpha = backgroundColor.alpha // Mantém o alpha original
+        )
     }
 
-    val bitmap = inputStream?.let {
-        BitmapFactory.decodeStream(it).asImageBitmap()
-    }
+    val customButtonContentColor = onBackgroundColor
 
-    // Definir as cores customizadas para os botões
     val customButtonColors = ButtonDefaults.buttonColors(
-        containerColor = if (isDarkTheme) Color.White else Color(0xFF1A1A1A), // Branco no escuro, Quase Preto no claro
-        contentColor = if (isDarkTheme) Color(0xFF1A1A1A) else Color.White // Quase Preto no escuro, Branco no claro (Cor do texto)
-        // Você pode adicionar disabledContainerColor e disabledContentColor se necessário
+        containerColor = customButtonContainerColor,
+        contentColor = customButtonContentColor
     )
 
-    // Usar um Box para empilhar o fundo e o conteúdo
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        Spacer(modifier = Modifier.weight(0.3f))
 
-        // Exibe a imagem de fundo
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap,
-                contentDescription = "Background Image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            // Opcional: Mostrar uma cor de fundo sólida ou outro indicador se a imagem não carregar
-            Spacer(modifier = Modifier.fillMaxSize().background(if (isDarkTheme) Color.Black else Color.LightGray)) // Exemplo de cor de fundo alternativa
-        }
+        Spacer(modifier = Modifier.size(150.dp))
 
+        Text(
+            text = "Logo da Empresa",
+            style = MaterialTheme.typography.headlineMedium,
+            color = onBackgroundColor
+        )
+        Spacer(modifier = Modifier.height(32.dp))
 
-        // Conteúdo principal (logo, botões) dentro de um Column, alinhado ao centro
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Button(
+            onClick = { navController.navigate(Routes.LISTA) },
+            modifier = Modifier.fillMaxWidth(0.6f),
+            colors = customButtonColors
         ) {
-            // Placeholder para o Logo
-            Spacer(modifier = Modifier.size(150.dp))
-
-            // Exemplo com Text (temporário para visualizar):
-            Text(
-                text = "Logo da Empresa",
-                style = MaterialTheme.typography.headlineMedium,
-                // Ajustar a cor do texto do logo para ser visível sobre o fundo
-                color = if (isDarkTheme) Color.White else Color.Black // Exemplo: Branco no escuro, Preto no claro
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-
-
-            // Botão "Acessar Catálogo" com cores customizadas
-            Button(
-                onClick = { navController.navigate(Routes.LISTA) },
-                modifier = Modifier.fillMaxWidth(0.8f),
-                colors = customButtonColors // Aplicar cores customizadas
-            ) {
-                Text("Acessar Catálogo")
-            }
-
-            // Linha fina entre os botões
-            Spacer(modifier = Modifier.height(16.dp)) // Espaço antes da linha
-            HorizontalDivider( // Usar HorizontalDivider em vez de Divider
-                modifier = Modifier.fillMaxWidth(0.8f), // Mesma largura dos botões
-                thickness = 1.dp, // Espessura da linha
-                color = if (isDarkTheme) Color(0xFF1A1A1A) else Color.White // Mesma cor do texto do botão para contraste
-            )
-            Spacer(modifier = Modifier.height(16.dp)) // Espaço depois da linha
-
-
-            // Botão "Fale Conosco" com cores customizadas
-            Button(
-                onClick = {
-                    Toast.makeText(context, "Fale Conosco clicado!", Toast.LENGTH_SHORT).show()
-                    // TODO: Implementar a ação real de Fale Conosco
-                },
-                modifier = Modifier.fillMaxWidth(0.8f),
-                colors = customButtonColors // Aplicar cores customizadas
-            ) {
-                Text("Fale Conosco")
-            }
+            Text("Acessar Catálogo")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(0.6f),
+            thickness = 1.dp,
+            color = customButtonContentColor
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                Toast.makeText(context, "Fale Conosco clicado!", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.fillMaxWidth(0.6f),
+            colors = customButtonColors
+        ) {
+            Text("Fale Conosco")
+        }
+
+        Spacer(modifier = Modifier.weight(0.7f))
     }
 }
