@@ -10,7 +10,8 @@ object ProdutoRepository {
                 categoria2 = "Honda",
                 imagemUrl = "biz.png",
                 codigo = "1109",
-                detalhes = "detalhes teste"
+                detalhes = "detalhes teste",
+                apelido = ""
             ),
             Produto(
                 nome = "Retroisor Bmw F800",
@@ -19,7 +20,8 @@ object ProdutoRepository {
                 categoria2 = "Honda",
                 imagemUrl = "bmw.png",
                 codigo = "1370",
-                detalhes = "detalhes teste"
+                detalhes = "detalhes teste",
+                apelido = "bmw"
             ),
             Produto(
                 nome = "Retrovisor Cb 300",
@@ -28,7 +30,8 @@ object ProdutoRepository {
                 categoria2 = "Honda",
                 imagemUrl = "cb300.png",
                 codigo = "1148",
-                detalhes = "detalhes teste"
+                detalhes = "detalhes teste",
+                apelido = "cb"
             ),
             Produto(
                 nome = "Retrovisor Z400",
@@ -37,7 +40,8 @@ object ProdutoRepository {
                 categoria2 = "Yamaha",
                 imagemUrl = "z400.png",
                 codigo = "1412",
-                detalhes = "detalhes teste"
+                detalhes = "detalhes teste",
+                apelido = "z400"
             ),
             Produto(
                 nome = "Retrovisor Factor / Nmax",
@@ -46,7 +50,8 @@ object ProdutoRepository {
                 categoria2 = "Yamaha",
                 imagemUrl = "factor.png",
                 codigo = "1158",
-                detalhes = "detalhes teste"
+                detalhes = "detalhes teste",
+                apelido = "factor"
             ),
             Produto(
                 nome = "Retrovisor Titan 125",
@@ -55,7 +60,8 @@ object ProdutoRepository {
                 categoria2 = "Honda",
                 imagemUrl = "titan125.png",
                 codigo = "1106",
-                detalhes = "detalhes teste"
+                detalhes = "detalhes teste",
+                apelido = "titan"
             ),
             Produto(
                 nome = "Retrovisor Titan 150",
@@ -64,7 +70,8 @@ object ProdutoRepository {
                 categoria2 = "Honda",
                 imagemUrl = "titan150.png",
                 codigo = "1103",
-                detalhes = "detalhes teste"
+                detalhes = "detalhes teste",
+                apelido = "titan"
             )
         )
     }

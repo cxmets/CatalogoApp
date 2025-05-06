@@ -41,36 +41,38 @@ android {
 
 dependencies {
 
-    // Compose UI core
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-text")
-    implementation("androidx.compose.foundation:foundation")
-
-    implementation(libs.accompanist.systemuicontroller)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.material3)
-    implementation(libs.ui)
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.lifecycle.runtime.ktx)
-    implementation(libs.activity.compose)
     implementation(platform(libs.compose.bom))
-    implementation(libs.androidx.ui.text)
-
-    implementation(libs.material.icons.extended)
 
     implementation(libs.ui.graphics)
-    implementation(libs.ui.tooling.preview)
+    implementation(libs.ui.util)
+    implementation(libs.androidx.ui.text)
+    implementation(libs.foundation)
+    implementation(libs.material3)
+    implementation(libs.material.icons.extended)
+    implementation(libs.activity.compose)
+
+    // Navigation Compose
+    implementation(libs.androidx.navigation.compose)
+
+    // Lifecycle
+    implementation(libs.lifecycle.runtime.ktx)
+
+    // Core KTX
+    implementation(libs.androidx.core.ktx)
+
+    implementation(libs.accompanist.systemuicontroller)
 
     implementation(libs.coil.compose)
 
+    // Dependências de Teste
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
 
+    // Dependências de Debug
     debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.ui.tooling.preview)
     debugImplementation(libs.ui.test.manifest)
 }

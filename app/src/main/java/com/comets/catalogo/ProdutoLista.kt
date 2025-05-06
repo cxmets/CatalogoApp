@@ -9,12 +9,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.automirrored.filled.ArrowBack // Importar o ícone de voltar
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController // Importar NavController
+import androidx.navigation.NavController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,6 +26,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MenuAnchorType
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.background
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -38,7 +43,7 @@ fun ProdutoLista(
     onSearchTextChanged: (String) -> Unit,
     onCategorySelected: (String) -> Unit,
     onCategoria2Selected: (String) -> Unit,
-    navController: NavController // Receber NavController como parâmetro
+    navController: NavController
 ) {
     var filtrosVisiveis by remember { mutableStateOf(false) }
     var expandedCategory by remember { mutableStateOf(false) }
@@ -47,7 +52,38 @@ fun ProdutoLista(
     val keyboardController = LocalSoftwareKeyboardController.current
     val isDarkTheme = isSystemInDarkTheme()
 
-    // Definir cores customizadas para os TextField (pesquisa e filtros)
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+
+    val customButtonContainerColor = if (isDarkTheme) {
+        Color(
+            red = (backgroundColor.red + 0.15f).coerceIn(0f, 1f),
+            green = (backgroundColor.green + 0.15f).coerceIn(0f, 1f),
+            blue = (backgroundColor.blue + 0.15f).coerceIn(0f, 1f),
+            alpha = backgroundColor.alpha
+        )
+    } else {
+        Color(
+            red = (backgroundColor.red - 0.15f).coerceIn(0f, 1f),
+            green = (backgroundColor.green - 0.15f).coerceIn(0f, 1f),
+            blue = (backgroundColor.blue - 0.15f).coerceIn(0f, 1f),
+            alpha = backgroundColor.alpha
+        )
+    }
+
+    val customButtonContentColor = onBackgroundColor
+
+    val systemUiController = rememberSystemUiController()
+    val useDarkIcons = !isDarkTheme
+
+    LaunchedEffect(systemUiController, useDarkIcons) {
+        systemUiController.setNavigationBarColor(
+            color = Color.Transparent,
+            darkIcons = useDarkIcons
+        )
+    }
+
+
     val customInputColors = TextFieldDefaults.colors(
         focusedContainerColor = Color.Transparent,
         unfocusedContainerColor = Color.Transparent,
@@ -72,7 +108,12 @@ fun ProdutoLista(
         disabledTrailingIconColor = if (isDarkTheme) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f),
     )
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Transparent)
+            .padding(top = 18.dp)
+    ) {
 
         Row(
             modifier = Modifier
@@ -81,15 +122,15 @@ fun ProdutoLista(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // BOTÃO DE VOLTAR (Novo)
-            IconButton(onClick = {
-                // Volta para a tela anterior na pilha de navegação (TelaInicial)
-                navController.popBackStack()
-            }) {
+            IconButton(
+                onClick = {
+                    navController.popBackStack()
+                },
+                modifier = Modifier.offset(y = 8.dp)
+            ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
             }
 
-            // BARRA DE PESQUISA (TextField)
             TextField(
                 value = searchText,
                 onValueChange = onSearchTextChanged,
@@ -99,7 +140,7 @@ fun ProdutoLista(
                 keyboardActions = KeyboardActions(
                     onSearch = { keyboardController?.hide() }
                 ),
-                modifier = Modifier.weight(1f), // Ocupa o espaço restante
+                modifier = Modifier.weight(1f),
                 colors = customInputColors,
                 trailingIcon = {
                     if (searchText.isNotEmpty()) {
@@ -112,8 +153,10 @@ fun ProdutoLista(
                 }
             )
 
-            // BOTÃO DE FILTRO (Movido para a direita)
-            IconButton(onClick = { filtrosVisiveis = !filtrosVisiveis }) {
+            IconButton(
+                onClick = { filtrosVisiveis = !filtrosVisiveis },
+                modifier = Modifier.offset(y = 8.dp)
+            ) {
                 Icon(
                     imageVector = if (filtrosVisiveis) Icons.Filled.FilterListOff else Icons.Filled.FilterList,
                     contentDescription = if (filtrosVisiveis) "Ocultar Filtros" else "Mostrar Filtros"
@@ -121,11 +164,16 @@ fun ProdutoLista(
             }
         }
 
-        // # FILTROS DROPDOWN E BOTÃO LIMPAR (Visibilidade controlada por filtrosVisiveis)
+        if (!filtrosVisiveis) {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         if (filtrosVisiveis) {
-            Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+            Column(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    // ExposedDropdownMenuBox para CATEGORIA
                     ExposedDropdownMenuBox(
                         expanded = expandedCategory,
                         onExpandedChange = { expandedCategory = it },
@@ -176,7 +224,6 @@ fun ProdutoLista(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // ExposedDropdownMenuBox para CATEGORIA 2
                     ExposedDropdownMenuBox(
                         expanded = expandedCategoria2,
                         onExpandedChange = { expandedCategoria2 = it },
@@ -234,10 +281,12 @@ fun ProdutoLista(
                         onCategorySelected("")
                         onCategoria2Selected("")
                     },
-                    modifier = Modifier.fillMaxWidth(),
+
+                    modifier = Modifier.fillMaxWidth(0.7f)
+                        .padding(top = 8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDarkTheme) Color.Black else Color.White,
-                        contentColor = if (isDarkTheme) Color.White else Color.Black
+                        containerColor = customButtonContainerColor,
+                        contentColor = customButtonContentColor
                     )
                 ) {
                     Text("Limpar Filtros")
@@ -247,8 +296,9 @@ fun ProdutoLista(
             }
         }
 
+
         val filteredProdutos = produtos.filter {
-            (it.nome.contains(searchText, ignoreCase = true) || it.codigo.contains(searchText, ignoreCase = true)) &&
+            (it.nome.contains(searchText, ignoreCase = true) || it.apelido.contains(searchText, ignoreCase = true) || it.codigo.contains(searchText, ignoreCase = true)) &&
                     (selectedCategory.isEmpty() || it.categoria == selectedCategory) &&
                     (selectedCategoria2.isEmpty() || it.categoria2 == selectedCategoria2)
         }
@@ -257,7 +307,8 @@ fun ProdutoLista(
             columns = GridCells.Fixed(2),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 8.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
