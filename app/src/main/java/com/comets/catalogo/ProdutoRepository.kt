@@ -1,78 +1,55 @@
 package com.comets.catalogo
 
+import android.content.Context
+import android.util.Log // Para logs de erro
+import kotlinx.serialization.json.Json
+import java.io.IOException
+
 object ProdutoRepository {
-    fun getProdutos(): List<Produto> {
-        return listOf(
-            Produto(
-                nome = "Retrovisor Biz 125",
-                descricao = "Retrovisor Biz 125",
-                categoria = "Retrovisores",
-                categoria2 = "Honda",
-                imagemUrl = "biz.png",
-                codigo = "1109",
-                detalhes = "detalhes teste",
-                apelido = ""
-            ),
-            Produto(
-                nome = "Retroisor Bmw F800",
-                descricao = "Retrovisor Bmw Gs650 F800",
-                categoria = "Retrovisores",
-                categoria2 = "Honda",
-                imagemUrl = "bmw.png",
-                codigo = "1370",
-                detalhes = "detalhes teste",
-                apelido = "bmw"
-            ),
-            Produto(
-                nome = "Retrovisor Cb 300",
-                descricao = "Retrovisor Cb 300",
-                categoria = "Retrovisores",
-                categoria2 = "Honda",
-                imagemUrl = "cb300.png",
-                codigo = "1148",
-                detalhes = "detalhes teste",
-                apelido = "cb"
-            ),
-            Produto(
-                nome = "Retrovisor Z400",
-                descricao = "Retrovisor Z400",
-                categoria = "Retrovisores",
-                categoria2 = "Yamaha",
-                imagemUrl = "z400.png",
-                codigo = "1412",
-                detalhes = "detalhes teste",
-                apelido = "z400"
-            ),
-            Produto(
-                nome = "Retrovisor Factor / Nmax",
-                descricao = "Retrovisor Factor / Nmax",
-                categoria = "Retrovisores",
-                categoria2 = "Yamaha",
-                imagemUrl = "factor.png",
-                codigo = "1158",
-                detalhes = "detalhes teste",
-                apelido = "factor"
-            ),
-            Produto(
-                nome = "Retrovisor Titan 125",
-                descricao = "Retrovisor Titan 125 - 2014",
-                categoria = "Retrovisores",
-                categoria2 = "Honda",
-                imagemUrl = "titan125.png",
-                codigo = "1106",
-                detalhes = "detalhes teste",
-                apelido = "titan"
-            ),
-            Produto(
-                nome = "Retrovisor Titan 150",
-                descricao = "Retrovisor Titan 150",
-                categoria = "Retrovisores",
-                categoria2 = "Honda",
-                imagemUrl = "titan150.png",
-                codigo = "1103",
-                detalhes = "detalhes teste",
-                apelido = "titan"
-            )
-        )
+
+    // Cache simples para evitar ler o arquivo repetidamente
+    private var cachedProdutos: List<Produto>? = null
+
+    // Configuração do parser JSON (ignora chaves desconhecidas se houver no JSON)
+    private val jsonParser = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true // <<< LINHA ADICIONADA/MODIFICADA
+    }
+
+    // Agora recebe Context
+    fun getProdutos(context: Context): List<Produto> {
+        // Retorna cache se já carregado
+        cachedProdutos?.let { return it }
+
+        return try {
+            // Acessa o AssetManager
+            val inputStream = context.assets.open("products.json")
+            // Lê o conteúdo do arquivo
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+            // Fecha o stream
+            inputStream.close()
+            // Parseia a string JSON para uma lista de Produtos
+            val produtos = jsonParser.decodeFromString<List<Produto>>(jsonString)
+            // Armazena em cache e retorna
+            cachedProdutos = produtos
+            produtos
+        } catch (e: IOException) {
+            // Erro ao ler o arquivo
+            Log.e("ProdutoRepository", "Erro ao ler products.json", e)
+            emptyList() // Retorna lista vazia em caso de erro
+        } catch (e: kotlinx.serialization.SerializationException) {
+            // Erro ao parsear o JSON
+            Log.e("ProdutoRepository", "Erro ao parsear JSON do products.json", e)
+            emptyList() // Retorna lista vazia em caso de erro
+        } catch (e: Exception) {
+            // Outros erros inesperados
+            Log.e("ProdutoRepository", "Erro inesperado ao carregar produtos", e)
+            emptyList()
+        }
+    }
+
+    fun getProdutoPorCodigo(context: Context, codigo: String): Produto? {
+        return getProdutos(context).find { it.codigo == codigo }
     }
 }

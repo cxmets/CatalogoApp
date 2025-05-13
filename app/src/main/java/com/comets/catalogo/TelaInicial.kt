@@ -1,99 +1,116 @@
 package com.comets.catalogo
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import android.widget.Toast
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.Color
+
 
 @Composable
 fun TelaInicial(navController: NavController) {
     val context = LocalContext.current
-    val isDarkTheme = isSystemInDarkTheme()
+    val systemIsDarkTheme = isSystemInDarkTheme()
 
     val backgroundColor = MaterialTheme.colorScheme.background
-    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+    val outlineColor = MaterialTheme.colorScheme.outline
 
-    // Calcular a cor customizada para o container dos botões manualmente
-    val customButtonContainerColor = if (isDarkTheme) {
-        // No tema escuro, tornar a cor ligeiramente mais clara
-        Color(
-            red = (backgroundColor.red + 0.15f).coerceIn(0f, 1f), // Aumenta Vermelho (clamp entre 0f e 1f)
-            green = (backgroundColor.green + 0.15f).coerceIn(0f, 1f), // Aumenta Verde
-            blue = (backgroundColor.blue + 0.15f).coerceIn(0f, 1f), // Aumenta Azul
-            alpha = backgroundColor.alpha // Mantém o alpha original
-        )
-    } else {
-        // No tema claro, tornar a cor ligeiramente mais escura
-        Color(
-            red = (backgroundColor.red - 0.15f).coerceIn(0f, 1f), // Diminui Vermelho
-            green = (backgroundColor.green - 0.15f).coerceIn(0f, 1f), // Diminui Verde
-            blue = (backgroundColor.blue - 0.15f).coerceIn(0f, 1f), // Diminui Azul
-            alpha = backgroundColor.alpha // Mantém o alpha original
-        )
-    }
+    val amareloOriginal = MaterialTheme.colorScheme.tertiary
+    val laranjaOriginal = MaterialTheme.colorScheme.primary
+    val vermelhoOriginal = MaterialTheme.colorScheme.secondary
 
-    val customButtonContentColor = onBackgroundColor
-
-    val customButtonColors = ButtonDefaults.buttonColors(
-        containerColor = customButtonContainerColor,
-        contentColor = customButtonContentColor
+    val nexpartVibrantGradient = Brush.horizontalGradient(
+        colors = listOf(amareloOriginal, laranjaOriginal, vermelhoOriginal)
     )
+
+    val lightenFactor = 0.75f
+    // A função 'lighten' agora vem de CommonUi.kt
+    val amareloClarinho = amareloOriginal.lighten(lightenFactor, forceOpaque = true)
+    val laranjaClarinho = laranjaOriginal.lighten(lightenFactor, forceOpaque = true)
+    val vermelhoClarinho = vermelhoOriginal.lighten(lightenFactor, forceOpaque = true)
+
+    val nexpartLightGradient = Brush.horizontalGradient(
+        colors = listOf(amareloClarinho, laranjaClarinho, vermelhoClarinho)
+    )
+
+    val textoCorBotoes = Color.Black
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(backgroundColor)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.weight(0.3f))
 
-        Spacer(modifier = Modifier.size(150.dp))
-
-        Text(
-            text = "Logo da Empresa",
-            style = MaterialTheme.typography.headlineMedium,
-            color = onBackgroundColor
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = { navController.navigate(Routes.LISTA) },
-            modifier = Modifier.fillMaxWidth(0.6f),
-            colors = customButtonColors
-        ) {
-            Text("Acessar Catálogo")
+        val logoResourceId = if (systemIsDarkTheme) {
+            R.drawable.logo_dark
+        } else {
+            R.drawable.logo_light
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(0.6f),
-            thickness = 1.dp,
-            color = customButtonContentColor
+        Image(
+            painter = painterResource(id = logoResourceId),
+            contentDescription = "Logo da Nexpart",
+            modifier = Modifier
+                .fillMaxWidth(0.70f) // Seu ajuste
+                .aspectRatio(1f)     // Seu ajuste
+                .padding(bottom = 5.dp), // Seu ajuste
+            contentScale = ContentScale.Fit
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                Toast.makeText(context, "Fale Conosco clicado!", Toast.LENGTH_SHORT).show()
-            },
-            modifier = Modifier.fillMaxWidth(0.6f),
-            colors = customButtonColors
+        Spacer(modifier = Modifier.height(14.dp)) // Seu ajuste
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth(0.75f)
         ) {
-            Text("Fale Conosco")
-        }
+            // GradientBorderLightFillButton agora vem de CommonUi.kt
+            GradientBorderLightFillButton(
+                text = "Acessar Catálogo",
+                vibrantGradient = nexpartVibrantGradient,
+                lightGradient = nexpartLightGradient,
+                textColor = textoCorBotoes,
+                onClick = { navController.navigate(Routes.LISTA) },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                cornerRadiusDp = 25.dp,
+                borderWidth = 2.dp
+            )
 
-        Spacer(modifier = Modifier.weight(0.7f))
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(0.8f),
+                thickness = 1.dp,
+                color = outlineColor.copy(alpha = 0.3f)
+            )
+
+            GradientBorderLightFillButton(
+                text = "Fale Conosco",
+                vibrantGradient = nexpartVibrantGradient,
+                lightGradient = nexpartLightGradient,
+                textColor = textoCorBotoes,
+                onClick = {
+                    Toast.makeText(context, "Fale Conosco (Em desenvolvimento)", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                cornerRadiusDp = 25.dp,
+                borderWidth = 2.dp
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
