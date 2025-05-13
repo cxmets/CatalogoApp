@@ -1,7 +1,5 @@
 package com.comets.catalogo
 
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,21 +12,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController // Importar NavController
+import androidx.navigation.NavController
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import androidx.compose.ui.text.style.TextAlign
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @Composable
-fun ProdutoItem(produto: Produto, navController: NavController) { // Recebe NavController
+fun ProdutoItem(produto: Produto, navController: NavController) {
     val context = LocalContext.current
-    val assetManager = context.assets
 
     Box {
         Column(
@@ -39,21 +37,17 @@ fun ProdutoItem(produto: Produto, navController: NavController) { // Recebe NavC
                     .padding(7.dp)
                     .clickable {
                         val encodedCodigo = URLEncoder.encode(produto.codigo, StandardCharsets.UTF_8.toString())
-                        // Usar a constante de rota
                         navController.navigate("${Routes.DETALHES_BASE}/$encodedCodigo")
                     },
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                // O carregamento da imagem pode ser otimizado aqui no futuro
-                val inputStream = assetManager.open(produto.imagemUrl)
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-                inputStream.close()
-                val imageBitmap = bitmap.asImageBitmap()
-
-                Image(
-                    bitmap = imageBitmap,
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data("file:///android_asset/${produto.imagemUrl}")
+                        .crossfade(true)
+                        .build(),
                     contentDescription = produto.nome,
                     modifier = Modifier
                         .fillMaxWidth()

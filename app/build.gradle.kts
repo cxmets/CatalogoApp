@@ -66,12 +66,6 @@ dependencies {
 
     implementation(libs.coil.compose)
 
-    // Dependências de Teste
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-
-    androidTestImplementation(libs.ui.test.junit4)
 
     // Dependências de Debug
     debugImplementation(libs.ui.tooling)

@@ -27,11 +27,16 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.comets.catalogo.ui.theme.NexpartOrangeClaro // Importando a cor diretamente
+import com.comets.catalogo.ui.theme.NexpartOrangeClaro
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import java.text.Normalizer // Import para Normalizer
 
-// Assumindo que Color.lighten e GradientBorderLightFillButton
-// estão definidos em um arquivo comum como CommonUi.kt no mesmo pacote.
+// Função de extensão para normalizar strings para busca (remove acentos, converte para minúsculas, trim)
+// Você pode mover esta função para um arquivo de utilitários se preferir.
+private fun String.normalizeForSearch(): String {
+    val normalized = Normalizer.normalize(this, Normalizer.Form.NFD)
+    return Regex("\\p{InCombiningDiacriticalMarks}+").replace(normalized, "").lowercase().trim()
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -57,10 +62,8 @@ fun ProdutoLista(
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val isDarkTheme = isSystemInDarkTheme()
-
     val corDestaqueUnificada = NexpartOrangeClaro
 
-    // Cores para o TextField da Pesquisa (não Outlined)
     val searchTextFieldColors = TextFieldDefaults.colors(
         focusedContainerColor = Color.Transparent,
         unfocusedContainerColor = Color.Transparent,
@@ -69,9 +72,7 @@ fun ProdutoLista(
         cursorColor = corDestaqueUnificada,
         focusedLabelColor = corDestaqueUnificada,
         focusedIndicatorColor = corDestaqueUnificada,
-        // --- MUDANÇA AQUI ---
-        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), // Linha visível e sutil
-        // --- FIM DA MUDANÇA ---
+        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
         focusedTrailingIconColor = corDestaqueUnificada,
         unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
         unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -85,13 +86,12 @@ fun ProdutoLista(
         errorTextColor = MaterialTheme.colorScheme.error,
         disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
         errorLabelColor = MaterialTheme.colorScheme.error,
-        disabledIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f), // Linha sutil se desabilitado
+        disabledIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
         errorIndicatorColor = MaterialTheme.colorScheme.error,
         disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
         errorTrailingIconColor = MaterialTheme.colorScheme.error
     )
 
-    // Cores para os OutlinedTextField dos Filtros
     val filterOutlinedTextFieldColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = Color.Transparent,
         unfocusedContainerColor = Color.Transparent,
@@ -120,7 +120,6 @@ fun ProdutoLista(
         errorTrailingIconColor = MaterialTheme.colorScheme.error
     )
 
-    // Degradê para o botão "Limpar Filtros"
     val amareloOriginalBotao = MaterialTheme.colorScheme.tertiary
     val laranjaOriginalBotao = MaterialTheme.colorScheme.primary
     val vermelhoOriginalBotao = MaterialTheme.colorScheme.secondary
@@ -133,10 +132,9 @@ fun ProdutoLista(
         colors = listOf(amareloClarinhoBotao, laranjaClarinhoBotao, vermelhoClarinhoBotao)
     )
     val transparentBrush = Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent))
-
     val systemUiController = rememberSystemUiController()
 
-    LaunchedEffect(systemUiController, isDarkTheme) { // Corrigido para usar a variável correta
+    LaunchedEffect(systemUiController, isDarkTheme) {
         systemUiController.setNavigationBarColor(
             color = Color.Transparent,
             darkIcons = !isDarkTheme
@@ -177,12 +175,12 @@ fun ProdutoLista(
             TextField(
                 value = searchText,
                 onValueChange = onSearchTextChanged,
-                label = { Text("Pesquisar  (Nome ou Código)") },
+                label = { Text("Pesquisar (Nome ou Código)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
                 modifier = Modifier.weight(1f),
-                colors = searchTextFieldColors, // Aplicando as cores atualizadas
+                colors = searchTextFieldColors,
                 trailingIcon = {
                     if (searchText.isNotEmpty()) {
                         IconButton(onClick = { onSearchTextChanged("") }) {
@@ -218,7 +216,6 @@ fun ProdutoLista(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Linha 1: Tipo e Lente
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -292,7 +289,6 @@ fun ProdutoLista(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Linha 2: Haste e Rosca
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -390,11 +386,32 @@ fun ProdutoLista(
 
         val filteredProdutos = remember(produtos, searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
             Log.d("ProdutoLista", "Calculando filteredProdutos. Produtos base: ${produtos.size}, Search: '$searchText', Tipo: '$selectedTipo', Lente: '$selectedLente', Haste: '$selectedHaste', Rosca: '$selectedRosca'")
+
             val result = produtos.filter { produto ->
-                val searchMatch = searchText.isBlank() ||
-                        produto.nome.contains(searchText, ignoreCase = true) ||
-                        produto.codigo.contains(searchText, ignoreCase = true) ||
-                        produto.apelido.contains(searchText, ignoreCase = true)
+                val searchMatch = if (searchText.isBlank()) {
+                    true
+                } else {
+                    // Normaliza o texto da busca e divide em termos
+                    val normalizedSearchText = searchText.normalizeForSearch()
+                    val searchTerms = normalizedSearchText.split(Regex("\\s+")).filter { it.isNotEmpty() }
+
+                    if (searchTerms.isEmpty()) {
+                        true // Se não houver termos de busca válidos após a normalização/split
+                    } else {
+                        // Normaliza os campos do produto
+                        val normalizedProductName = produto.nome.normalizeForSearch()
+                        val normalizedProductCode = produto.codigo.normalizeForSearch() // Códigos geralmente não têm acentos, mas normalizar é seguro
+                        val normalizedProductAlias = produto.apelido.normalizeForSearch()
+
+                        // Cria um texto unificado do produto para busca
+                        val productTextForSearch = "$normalizedProductName $normalizedProductCode $normalizedProductAlias"
+
+                        // Verifica se TODOS os termos da busca (já normalizados) estão contidos no texto do produto (já normalizado)
+                        searchTerms.all { term ->
+                            productTextForSearch.contains(term)
+                        }
+                    }
+                }
 
                 val tipoMatch = selectedTipo.isEmpty() || produto.tipo.equals(selectedTipo, ignoreCase = true)
                 val lenteMatch = selectedLente.isEmpty() || produto.lente.equals(selectedLente, ignoreCase = true)
