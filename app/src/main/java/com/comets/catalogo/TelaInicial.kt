@@ -12,16 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import android.widget.Toast
 
 
 @Composable
 fun TelaInicial(navController: NavController) {
-    val context = LocalContext.current
     val systemIsDarkTheme = isSystemInDarkTheme()
 
     val backgroundColor = MaterialTheme.colorScheme.background
@@ -104,7 +101,7 @@ fun TelaInicial(navController: NavController) {
                 lightGradient = nexpartLightGradient,
                 textColor = textoCorBotoes,
                 onClick = {
-                    Toast.makeText(context, "Fale Conosco (Em desenvolvimento)", Toast.LENGTH_SHORT).show()
+                    navController.navigate(Routes.FALE_CONOSCO) // Navegar para a nova tela
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 cornerRadiusDp = 25.dp,

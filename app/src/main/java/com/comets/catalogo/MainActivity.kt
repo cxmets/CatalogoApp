@@ -80,6 +80,9 @@ fun AppContent() {
                 composable(Routes.INICIAL) {
                     TelaInicial(navController = navController)
                 }
+                composable(Routes.FALE_CONOSCO) {
+                    TelaFaleConosco(navController = navController)
+                }
                 composable(Routes.LISTA) {
                     // Obter produtos passando o context
                     // O 'remember' aqui com 'context' como chave garante que os produtos

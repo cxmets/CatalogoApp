@@ -1,12 +1,12 @@
 package com.comets.catalogo
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -29,10 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.comets.catalogo.ui.theme.NexpartOrangeClaro
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import java.text.Normalizer // Import para Normalizer
+import java.text.Normalizer
+import kotlinx.coroutines.launch
 
-// Função de extensão para normalizar strings para busca (remove acentos, converte para minúsculas, trim)
-// Você pode mover esta função para um arquivo de utilitários se preferir.
 private fun String.normalizeForSearch(): String {
     val normalized = Normalizer.normalize(this, Normalizer.Form.NFD)
     return Regex("\\p{InCombiningDiacriticalMarks}+").replace(normalized, "").lowercase().trim()
@@ -63,6 +62,30 @@ fun ProdutoLista(
     val keyboardController = LocalSoftwareKeyboardController.current
     val isDarkTheme = isSystemInDarkTheme()
     val corDestaqueUnificada = NexpartOrangeClaro
+
+    val gridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+
+    // Flag para prevenir cliques duplos no botão voltar
+    var isProcessingPopBack by remember { mutableStateOf(false) }
+
+    LaunchedEffect(searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
+        val allFiltersAreEmpty = searchText.isEmpty() &&
+                selectedTipo.isEmpty() &&
+                selectedLente.isEmpty() &&
+                selectedHaste.isEmpty() &&
+                selectedRosca.isEmpty()
+
+        if (allFiltersAreEmpty) {
+            val previousRoute = navController.previousBackStackEntry?.destination?.route
+            val cameFromDetails = previousRoute?.startsWith(Routes.DETALHES_BASE) == true
+            if (!cameFromDetails) {
+                scope.launch {
+                    gridState.scrollToItem(0)
+                }
+            }
+        }
+    }
 
     val searchTextFieldColors = TextFieldDefaults.colors(
         focusedContainerColor = Color.Transparent,
@@ -162,7 +185,29 @@ fun ProdutoLista(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             IconButton(
-                onClick = { navController.popBackStack() },
+                onClick = {
+                    if (isProcessingPopBack) { // Se já está processando um pop, ignora este clique
+                        return@IconButton
+                    }
+                    isProcessingPopBack = true // Marca que o processamento iniciou
+
+                    onSearchTextChanged("")
+                    onTipoSelected("")
+                    onLenteSelected("")
+                    onHasteSelected("")
+                    onRoscaSelected("")
+                    closeAllDropdowns()
+
+                    val popped = navController.popBackStack()
+                    // Se o pop foi bem-sucedido, ProdutoLista será destruída.
+                    // Se não foi (improvável neste fluxo, pois TelaInicial é o destino),
+                    // resetamos o flag para permitir futuras tentativas.
+                    if (!popped) {
+                        isProcessingPopBack = false
+                    }
+                    // Se popped for true, isProcessingPopBack será resetado naturalmente
+                    // quando ProdutoLista for recomposta em uma futura navegação para ela.
+                },
                 modifier = Modifier.offset(y = 8.dp)
             ) {
                 Icon(
@@ -375,6 +420,9 @@ fun ProdutoLista(
                         onRoscaSelected("")
                         closeAllDropdowns()
                         keyboardController?.hide()
+                        scope.launch {
+                            gridState.scrollToItem(0)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(0.7f).height(44.dp),
                     cornerRadiusDp = 21.dp,
@@ -385,28 +433,19 @@ fun ProdutoLista(
         }
 
         val filteredProdutos = remember(produtos, searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
-            Log.d("ProdutoLista", "Calculando filteredProdutos. Produtos base: ${produtos.size}, Search: '$searchText', Tipo: '$selectedTipo', Lente: '$selectedLente', Haste: '$selectedHaste', Rosca: '$selectedRosca'")
-
             val result = produtos.filter { produto ->
                 val searchMatch = if (searchText.isBlank()) {
                     true
                 } else {
-                    // Normaliza o texto da busca e divide em termos
                     val normalizedSearchText = searchText.normalizeForSearch()
                     val searchTerms = normalizedSearchText.split(Regex("\\s+")).filter { it.isNotEmpty() }
-
                     if (searchTerms.isEmpty()) {
-                        true // Se não houver termos de busca válidos após a normalização/split
+                        true
                     } else {
-                        // Normaliza os campos do produto
                         val normalizedProductName = produto.nome.normalizeForSearch()
-                        val normalizedProductCode = produto.codigo.normalizeForSearch() // Códigos geralmente não têm acentos, mas normalizar é seguro
+                        val normalizedProductCode = produto.codigo.normalizeForSearch()
                         val normalizedProductAlias = produto.apelido.normalizeForSearch()
-
-                        // Cria um texto unificado do produto para busca
                         val productTextForSearch = "$normalizedProductName $normalizedProductCode $normalizedProductAlias"
-
-                        // Verifica se TODOS os termos da busca (já normalizados) estão contidos no texto do produto (já normalizado)
                         searchTerms.all { term ->
                             productTextForSearch.contains(term)
                         }
@@ -420,15 +459,12 @@ fun ProdutoLista(
 
                 searchMatch && tipoMatch && lenteMatch && hasteMatch && roscaMatch
             }
-            Log.d("ProdutoLista", "filteredProdutos resultou em ${result.size} produtos.")
-            if (produtos.isNotEmpty() && result.isEmpty() && searchText.isBlank() && selectedTipo.isEmpty() && selectedLente.isEmpty() && selectedHaste.isEmpty() && selectedRosca.isEmpty()){
-                Log.w("ProdutoLista", "ALERTA: Produtos base não estão vazios, mas o filtro inicial resultou em zero produtos! Verifique a lógica de filtro ou os dados dos produtos.")
-            }
             result
         }
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
+            state = gridState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 8.dp)

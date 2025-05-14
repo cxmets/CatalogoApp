@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close // Import para o ícone 'X'
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableFloatStateOf
@@ -35,11 +36,12 @@ import coil.request.ImageRequest
 @Composable
 fun DetalhesProduto(produto: Produto, navController: NavController) {
     var isImageOverlayVisible by remember { mutableStateOf(false) }
+    var isProcessingPopBack by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 32.dp)
+            .padding(top = 32.dp) // Ajuste conforme o padding do topo da sua ProdutoLista
     ) {
         Row(
             modifier = Modifier
@@ -49,7 +51,15 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = {
-                navController.popBackStack()
+                if (isProcessingPopBack) {
+                    return@IconButton
+                }
+                isProcessingPopBack = true
+
+                val popped = navController.popBackStack()
+                if (!popped) {
+                    isProcessingPopBack = false
+                }
             }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
             }
@@ -92,27 +102,41 @@ fun DetalhesProduto(produto: Produto, navController: NavController) {
                 )
             }
 
+            // Coluna para os Textos de Detalhes do Produto com espaçamento ajustado
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
+
+                Spacer(modifier = Modifier.height(10.dp)) // Espaço antes do nome
+
+                Text( // NOME
                     text = produto.nome,
-                    fontSize = 24.sp,
+                    style = MaterialTheme.typography.headlineSmall, // Usando um estilo de tema para o nome
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
+
+                // AFASTAR descrição do nome
+                Spacer(modifier = Modifier.height(28.dp)) // Antes era 8.dp
+
+                Text( // DESCRIÇÃO
                     text = produto.descricao,
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge, // Usando um estilo de tema para a descrição
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(text = produto.detalhes, fontSize = 16.sp)
+
+                // APROXIMAR descrição dos detalhes
+                Spacer(modifier = Modifier.height(8.dp)) // Antes era 16.dp
+
+                Text( // DETALHES
+                    text = produto.detalhes,
+                    style = MaterialTheme.typography.bodyMedium, // Usando um estilo de tema para os detalhes
+                    modifier = Modifier.fillMaxWidth(), // Para ocupar a largura e permitir alinhamento se necessário
+                    textAlign = TextAlign.Start // Alinhar detalhes à esquerda para melhor leitura
+                )
             }
         }
     }
@@ -150,18 +174,17 @@ fun ZoomableImageOverlay(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.8f))
-            .clickable(
+            .clickable( // Permite fechar clicando no fundo
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) {
-                onDismiss()
-            }
-            .pointerInput(Unit) {}
+                indication = null,
+                onClick = onDismiss
+            )
+            .pointerInput(Unit) {} // Consome toques para não vazar para a tela de baixo
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data("file:///android_asset/${imageUrl}")
-                .build(), // Crossfade pode não ser ideal aqui
+                .build(),
             contentDescription = "Imagem Ampliada",
             modifier = Modifier
                 .fillMaxSize()
@@ -187,6 +210,7 @@ fun ZoomableImageOverlay(
                             scale = if (scale < 1.5f) 3f else minScale
                             offset = Offset.Zero
                         }
+                        // Não definir onClick aqui para que o clique no fundo do Box funcione para dispensar
                     )
                 }
                 .graphicsLayer {
@@ -198,5 +222,20 @@ fun ZoomableImageOverlay(
                 },
             contentScale = ContentScale.Fit
         )
+
+        // Botão 'X' para fechar
+        IconButton(
+            onClick = onDismiss,
+            modifier = Modifier
+                .align(Alignment.TopEnd) // Alinha no canto superior direito
+                .padding(top = 32.dp, end = 23.dp) // Padding para afastar das bordas
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Close, // Ícone 'X'
+                contentDescription = "Fechar zoom da imagem",
+                tint = Color.LightGray, // Cor branca para bom contraste com o fundo escuro
+                modifier = Modifier.size(40.dp) // Tamanho do ícone
+            )
+        }
     }
 }
