@@ -13,9 +13,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource // Necessário para R.string
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-
 
 @Composable
 fun TelaInicial(navController: NavController) {
@@ -33,7 +33,6 @@ fun TelaInicial(navController: NavController) {
     )
 
     val lightenFactor = 0.75f
-    // A função 'lighten' agora vem de CommonUi.kt
     val amareloClarinho = amareloOriginal.lighten(lightenFactor, forceOpaque = true)
     val laranjaClarinho = laranjaOriginal.lighten(lightenFactor, forceOpaque = true)
     val vermelhoClarinho = vermelhoOriginal.lighten(lightenFactor, forceOpaque = true)
@@ -62,24 +61,23 @@ fun TelaInicial(navController: NavController) {
 
         Image(
             painter = painterResource(id = logoResourceId),
-            contentDescription = "Logo da Nexpart",
+            contentDescription = stringResource(id = R.string.desc_logo_nexpart_tela_inicial),
             modifier = Modifier
-                .fillMaxWidth(0.70f) // Seu ajuste
-                .aspectRatio(1f)     // Seu ajuste
-                .padding(bottom = 5.dp), // Seu ajuste
+                .fillMaxWidth(0.70f)
+                .aspectRatio(1f)
+                .padding(bottom = 5.dp),
             contentScale = ContentScale.Fit
         )
 
-        Spacer(modifier = Modifier.height(14.dp)) // Seu ajuste
+        Spacer(modifier = Modifier.height(14.dp))
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth(0.75f)
         ) {
-            // GradientBorderLightFillButton agora vem de CommonUi.kt
             GradientBorderLightFillButton(
-                text = "Acessar Catálogo",
+                text = stringResource(id = R.string.tela_inicial_botao_catalogo),
                 vibrantGradient = nexpartVibrantGradient,
                 lightGradient = nexpartLightGradient,
                 textColor = textoCorBotoes,
@@ -96,12 +94,12 @@ fun TelaInicial(navController: NavController) {
             )
 
             GradientBorderLightFillButton(
-                text = "Fale Conosco",
+                text = stringResource(id = R.string.tela_inicial_botao_fale_conosco),
                 vibrantGradient = nexpartVibrantGradient,
                 lightGradient = nexpartLightGradient,
                 textColor = textoCorBotoes,
                 onClick = {
-                    navController.navigate(Routes.FALE_CONOSCO) // Navegar para a nova tela
+                    navController.navigate(Routes.FALE_CONOSCO)
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 cornerRadiusDp = 25.dp,

@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material3.*
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -24,23 +23,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource // Import para stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.comets.catalogo.ui.theme.NexpartOrangeClaro
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import java.text.Normalizer
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-
-private fun String.normalizeForSearch(): String {
-    val normalized = Normalizer.normalize(this, Normalizer.Form.NFD)
-    return Regex("\\p{InCombiningDiacriticalMarks}+").replace(normalized, "").lowercase().trim()
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ProdutoLista(
-    produtos: List<Produto>,
     searchText: String,
     selectedTipo: String,
     selectedLente: String,
@@ -51,13 +46,26 @@ fun ProdutoLista(
     onLenteSelected: (String) -> Unit,
     onHasteSelected: (String) -> Unit,
     onRoscaSelected: (String) -> Unit,
-    navController: NavController
+    onClearAllFiltersAndSearch: () -> Unit,
+    navController: NavController,
+    viewModel: ProdutoListaViewModel = viewModel()
 ) {
-    var filtrosVisiveis by remember { mutableStateOf(false) }
-    var expandedTipo by remember { mutableStateOf(false) }
-    var expandedLente by remember { mutableStateOf(false) }
-    var expandedHaste by remember { mutableStateOf(false) }
-    var expandedRosca by remember { mutableStateOf(false) }
+    val isLoading by viewModel.isLoading.collectAsState()
+    val currentFilteredProdutos by viewModel.filteredProdutos.collectAsState()
+    val rawProdutosForDropdowns by viewModel.rawProdutosForDropdowns.collectAsState()
+
+    val filtrosVisiveis by viewModel.filtrosVisiveis.collectAsState()
+    val expandedTipo by viewModel.expandedTipo.collectAsState()
+    val expandedLente by viewModel.expandedLente.collectAsState()
+    val expandedHaste by viewModel.expandedHaste.collectAsState()
+    val expandedRosca by viewModel.expandedRosca.collectAsState()
+    val isProcessingPopBack by viewModel.isProcessingPopBack.collectAsState()
+
+    LaunchedEffect(searchText) { viewModel.updateSearchFilter(searchText) }
+    LaunchedEffect(selectedTipo) { viewModel.updateTipoFilter(selectedTipo) }
+    LaunchedEffect(selectedLente) { viewModel.updateLenteFilter(selectedLente) }
+    LaunchedEffect(selectedHaste) { viewModel.updateHasteFilter(selectedHaste) }
+    LaunchedEffect(selectedRosca) { viewModel.updateRoscaFilter(selectedRosca) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val isDarkTheme = isSystemInDarkTheme()
@@ -66,34 +74,38 @@ fun ProdutoLista(
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
 
-    // Flag para prevenir cliques duplos no botão voltar
-    var isProcessingPopBack by remember { mutableStateOf(false) }
-
-    LaunchedEffect(searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
-        val allFiltersAreEmpty = searchText.isEmpty() &&
-                selectedTipo.isEmpty() &&
-                selectedLente.isEmpty() &&
-                selectedHaste.isEmpty() &&
-                selectedRosca.isEmpty()
-
-        if (allFiltersAreEmpty) {
-            val previousRoute = navController.previousBackStackEntry?.destination?.route
-            val cameFromDetails = previousRoute?.startsWith(Routes.DETALHES_BASE) == true
-            if (!cameFromDetails) {
-                scope.launch {
-                    gridState.scrollToItem(0)
+    LaunchedEffect(Unit) {
+        viewModel.uiEvents.collectLatest { event ->
+            when (event) {
+                is ProdutoListaViewModel.UiEvent.ScrollToTop -> {
+                    scope.launch {
+                        gridState.scrollToItem(0)
+                    }
                 }
             }
         }
     }
 
+    LaunchedEffect(searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
+        val allFiltersAreEmptyNow = searchText.isEmpty() &&
+                selectedTipo.isEmpty() &&
+                selectedLente.isEmpty() &&
+                selectedHaste.isEmpty() &&
+                selectedRosca.isEmpty()
+
+        if (allFiltersAreEmptyNow) {
+            val previousRoute = navController.previousBackStackEntry?.destination?.route
+            val cameFromDetails = previousRoute?.startsWith(Routes.DETALHES_BASE) == true
+            if (!cameFromDetails) {
+                viewModel.requestScrollToTop()
+            }
+        }
+    }
+
     val searchTextFieldColors = TextFieldDefaults.colors(
-        focusedContainerColor = Color.Transparent,
-        unfocusedContainerColor = Color.Transparent,
-        disabledContainerColor = Color.Transparent,
-        errorContainerColor = Color.Transparent,
-        cursorColor = corDestaqueUnificada,
-        focusedLabelColor = corDestaqueUnificada,
+        focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
+        disabledContainerColor = Color.Transparent, errorContainerColor = Color.Transparent,
+        cursorColor = corDestaqueUnificada, focusedLabelColor = corDestaqueUnificada,
         focusedIndicatorColor = corDestaqueUnificada,
         unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
         focusedTrailingIconColor = corDestaqueUnificada,
@@ -101,27 +113,12 @@ fun ProdutoLista(
         unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
         focusedTextColor = MaterialTheme.colorScheme.onBackground,
         unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-        selectionColors = TextSelectionColors(
-            handleColor = corDestaqueUnificada,
-            backgroundColor = corDestaqueUnificada.copy(alpha = 0.4f)
-        ),
-        disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorTextColor = MaterialTheme.colorScheme.error,
-        disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorLabelColor = MaterialTheme.colorScheme.error,
-        disabledIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorIndicatorColor = MaterialTheme.colorScheme.error,
-        disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorTrailingIconColor = MaterialTheme.colorScheme.error
+        selectionColors = TextSelectionColors(handleColor = corDestaqueUnificada, backgroundColor = corDestaqueUnificada.copy(alpha = 0.4f)),
     )
-
     val filterOutlinedTextFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = Color.Transparent,
-        unfocusedContainerColor = Color.Transparent,
-        disabledContainerColor = Color.Transparent,
-        errorContainerColor = Color.Transparent,
-        cursorColor = corDestaqueUnificada,
-        focusedLabelColor = corDestaqueUnificada,
+        focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
+        disabledContainerColor = Color.Transparent, errorContainerColor = Color.Transparent,
+        cursorColor = corDestaqueUnificada, focusedLabelColor = corDestaqueUnificada,
         focusedBorderColor = corDestaqueUnificada,
         unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
         focusedTrailingIconColor = corDestaqueUnificada,
@@ -129,20 +126,8 @@ fun ProdutoLista(
         unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
         focusedTextColor = MaterialTheme.colorScheme.onBackground,
         unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-        selectionColors = TextSelectionColors(
-            handleColor = corDestaqueUnificada,
-            backgroundColor = corDestaqueUnificada.copy(alpha = 0.4f)
-        ),
-        disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorTextColor = MaterialTheme.colorScheme.error,
-        disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorLabelColor = MaterialTheme.colorScheme.error,
-        disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorBorderColor = MaterialTheme.colorScheme.error,
-        disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        errorTrailingIconColor = MaterialTheme.colorScheme.error
+        selectionColors = TextSelectionColors(handleColor = corDestaqueUnificada, backgroundColor = corDestaqueUnificada.copy(alpha = 0.4f)),
     )
-
     val amareloOriginalBotao = MaterialTheme.colorScheme.tertiary
     val laranjaOriginalBotao = MaterialTheme.colorScheme.primary
     val vermelhoOriginalBotao = MaterialTheme.colorScheme.secondary
@@ -150,7 +135,6 @@ fun ProdutoLista(
     val amareloClarinhoBotao = amareloOriginalBotao.lighten(lightenFactorBotao, forceOpaque = true)
     val laranjaClarinhoBotao = laranjaOriginalBotao.lighten(lightenFactorBotao, forceOpaque = true)
     val vermelhoClarinhoBotao = vermelhoOriginalBotao.lighten(lightenFactorBotao, forceOpaque = true)
-
     val nexpartLightGradientFillBotao = Brush.horizontalGradient(
         colors = listOf(amareloClarinhoBotao, laranjaClarinhoBotao, vermelhoClarinhoBotao)
     )
@@ -158,17 +142,7 @@ fun ProdutoLista(
     val systemUiController = rememberSystemUiController()
 
     LaunchedEffect(systemUiController, isDarkTheme) {
-        systemUiController.setNavigationBarColor(
-            color = Color.Transparent,
-            darkIcons = !isDarkTheme
-        )
-    }
-
-    fun closeAllDropdowns() {
-        expandedTipo = false
-        expandedLente = false
-        expandedHaste = false
-        expandedRosca = false
+        systemUiController.setNavigationBarColor(color = Color.Transparent, darkIcons = !isDarkTheme)
     }
 
     Column(
@@ -178,49 +152,28 @@ fun ProdutoLista(
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             IconButton(
                 onClick = {
-                    if (isProcessingPopBack) { // Se já está processando um pop, ignora este clique
-                        return@IconButton
-                    }
-                    isProcessingPopBack = true // Marca que o processamento iniciou
-
-                    onSearchTextChanged("")
-                    onTipoSelected("")
-                    onLenteSelected("")
-                    onHasteSelected("")
-                    onRoscaSelected("")
-                    closeAllDropdowns()
-
+                    if (isProcessingPopBack) return@IconButton
+                    viewModel.setIsProcessingPopBack(true)
+                    onClearAllFiltersAndSearch()
+                    viewModel.closeAllDropdownsUiAction()
                     val popped = navController.popBackStack()
-                    // Se o pop foi bem-sucedido, ProdutoLista será destruída.
-                    // Se não foi (improvável neste fluxo, pois TelaInicial é o destino),
-                    // resetamos o flag para permitir futuras tentativas.
-                    if (!popped) {
-                        isProcessingPopBack = false
-                    }
-                    // Se popped for true, isProcessingPopBack será resetado naturalmente
-                    // quando ProdutoLista for recomposta em uma futura navegação para ela.
+                    if (!popped) viewModel.setIsProcessingPopBack(false)
                 },
                 modifier = Modifier.offset(y = 8.dp)
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Voltar",
-                    tint = corDestaqueUnificada
-                )
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(id = R.string.voltar), tint = corDestaqueUnificada)
             }
 
             TextField(
                 value = searchText,
                 onValueChange = onSearchTextChanged,
-                label = { Text("Pesquisar (Nome ou Código)") },
+                label = { Text(stringResource(id = R.string.produto_lista_label_pesquisa)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
@@ -229,22 +182,19 @@ fun ProdutoLista(
                 trailingIcon = {
                     if (searchText.isNotEmpty()) {
                         IconButton(onClick = { onSearchTextChanged("") }) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = "Limpar Pesquisa"
-                            )
+                            Icon(Icons.Default.Clear, stringResource(id = R.string.produto_lista_desc_limpar_pesquisa))
                         }
                     }
                 }
             )
 
             IconButton(
-                onClick = { filtrosVisiveis = !filtrosVisiveis },
+                onClick = { viewModel.toggleFiltrosVisiveis() },
                 modifier = Modifier.offset(y = 8.dp)
             ) {
                 Icon(
                     imageVector = if (filtrosVisiveis) Icons.Filled.FilterListOff else Icons.Filled.FilterList,
-                    contentDescription = if (filtrosVisiveis) "Ocultar Filtros" else "Mostrar Filtros",
+                    contentDescription = if (filtrosVisiveis) stringResource(id = R.string.produto_lista_desc_ocultar_filtros) else stringResource(id = R.string.produto_lista_desc_mostrar_filtros),
                     tint = corDestaqueUnificada
                 )
             }
@@ -256,225 +206,103 @@ fun ProdutoLista(
 
         if (filtrosVisiveis) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedTipo,
-                        onExpandedChange = { closeAllDropdowns(); expandedTipo = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            readOnly = true,
-                            value = selectedTipo.ifEmpty { "Todos" },
-                            onValueChange = {},
-                            label = { Text("Tipo") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTipo) },
-                            colors = filterOutlinedTextFieldColors,
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                .fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedTipo,
-                            onDismissRequest = { expandedTipo = false }
-                        ) {
-                            val tipos = remember(produtos, selectedLente, selectedHaste, selectedRosca) {
-                                produtos.filter { produto ->
-                                    (selectedLente.isEmpty() || produto.lente == selectedLente) &&
-                                            (selectedHaste.isEmpty() || produto.haste == selectedHaste) &&
-                                            (selectedRosca.isEmpty() || produto.rosca == selectedRosca)
-                                }.map { it.tipo }.filter { it.isNotEmpty() }.distinct().sorted()
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
+                    ExposedDropdownMenuBox(expanded = expandedTipo, onExpandedChange = { viewModel.setExpandedTipo(it) }, Modifier.weight(1f)) {
+                        OutlinedTextField(readOnly = true, value = selectedTipo.ifEmpty { stringResource(id = R.string.filtro_opcao_todos) }, onValueChange = {}, label = { Text(stringResource(id = R.string.filtro_label_tipo)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTipo) }, colors = filterOutlinedTextFieldColors, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(), shape = MaterialTheme.shapes.medium)
+                        ExposedDropdownMenu(expanded = expandedTipo, onDismissRequest = { viewModel.setExpandedTipo(false) }) {
+                            val tipos = remember(rawProdutosForDropdowns, selectedLente, selectedHaste, selectedRosca) {
+                                rawProdutosForDropdowns.filter { p -> (selectedLente.isEmpty()||p.lente==selectedLente) && (selectedHaste.isEmpty()||p.haste==selectedHaste) && (selectedRosca.isEmpty()||p.rosca==selectedRosca) }.map { it.tipo }.filter { it.isNotEmpty() }.distinct().sorted()
                             }
-                            DropdownMenuItem(text = { Text("Todos os Tipos") }, onClick = { onTipoSelected(""); expandedTipo = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
-                            tipos.forEach { tipo -> DropdownMenuItem(text = { Text(tipo) }, onClick = { onTipoSelected(tipo); expandedTipo = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
+                            DropdownMenuItem(text = { Text(stringResource(id = R.string.filtro_opcao_todos_tipos)) }, onClick = { onTipoSelected(""); viewModel.setExpandedTipo(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
+                            tipos.forEach { tipo -> DropdownMenuItem(text = { Text(tipo) }, onClick = { onTipoSelected(tipo); viewModel.setExpandedTipo(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
                         }
                     }
-
-                    ExposedDropdownMenuBox(
-                        expanded = expandedLente,
-                        onExpandedChange = { closeAllDropdowns(); expandedLente = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            readOnly = true,
-                            value = selectedLente.ifEmpty { "Todas" },
-                            onValueChange = {},
-                            label = { Text("Lente") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedLente) },
-                            colors = filterOutlinedTextFieldColors,
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                .fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedLente,
-                            onDismissRequest = { expandedLente = false }
-                        ) {
-                            val lentes = remember(produtos, selectedTipo, selectedHaste, selectedRosca) {
-                                produtos.filter { produto ->
-                                    (selectedTipo.isEmpty() || produto.tipo == selectedTipo) &&
-                                            (selectedHaste.isEmpty() || produto.haste == selectedHaste) &&
-                                            (selectedRosca.isEmpty() || produto.rosca == selectedRosca)
-                                }.map { it.lente }.filter { it.isNotEmpty() }.distinct().sorted()
+                    ExposedDropdownMenuBox(expanded = expandedLente, onExpandedChange = { viewModel.setExpandedLente(it) }, Modifier.weight(1f)) {
+                        OutlinedTextField(readOnly = true, value = selectedLente.ifEmpty { stringResource(id = R.string.filtro_opcao_todas) }, onValueChange = {}, label = { Text(stringResource(id = R.string.filtro_label_lente)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedLente) }, colors = filterOutlinedTextFieldColors, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(), shape = MaterialTheme.shapes.medium)
+                        ExposedDropdownMenu(expanded = expandedLente, onDismissRequest = { viewModel.setExpandedLente(false) }) {
+                            val lentes = remember(rawProdutosForDropdowns, selectedTipo, selectedHaste, selectedRosca) {
+                                rawProdutosForDropdowns.filter { p -> (selectedTipo.isEmpty()||p.tipo==selectedTipo) && (selectedHaste.isEmpty()||p.haste==selectedHaste) && (selectedRosca.isEmpty()||p.rosca==selectedRosca) }.map { it.lente }.filter { it.isNotEmpty() }.distinct().sorted()
                             }
-                            DropdownMenuItem(text = { Text("Todas as Lentes") }, onClick = { onLenteSelected(""); expandedLente = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
-                            lentes.forEach { lente -> DropdownMenuItem(text = { Text(lente) }, onClick = { onLenteSelected(lente); expandedLente = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
+                            DropdownMenuItem(text = { Text(stringResource(id = R.string.filtro_opcao_todas_lentes)) }, onClick = { onLenteSelected(""); viewModel.setExpandedLente(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
+                            lentes.forEach { lente -> DropdownMenuItem(text = { Text(lente) }, onClick = { onLenteSelected(lente); viewModel.setExpandedLente(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedHaste,
-                        onExpandedChange = { closeAllDropdowns(); expandedHaste = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            readOnly = true,
-                            value = selectedHaste.ifEmpty { "Todas" },
-                            onValueChange = {},
-                            label = { Text("Haste") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHaste) },
-                            colors = filterOutlinedTextFieldColors,
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                .fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedHaste,
-                            onDismissRequest = { expandedHaste = false }
-                        ) {
-                            val hastes = remember(produtos, selectedTipo, selectedLente, selectedRosca) {
-                                produtos.filter { produto ->
-                                    (selectedTipo.isEmpty() || produto.tipo == selectedTipo) &&
-                                            (selectedLente.isEmpty() || produto.lente == selectedLente) &&
-                                            (selectedRosca.isEmpty() || produto.rosca == selectedRosca)
-                                }.map { it.haste }.filter { it.isNotEmpty() }.distinct().sorted()
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
+                    ExposedDropdownMenuBox(expanded = expandedHaste, onExpandedChange = { viewModel.setExpandedHaste(it) }, Modifier.weight(1f)) {
+                        OutlinedTextField(readOnly = true, value = selectedHaste.ifEmpty { stringResource(id = R.string.filtro_opcao_todas) }, onValueChange = {}, label = { Text(stringResource(id = R.string.filtro_label_haste)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHaste) }, colors = filterOutlinedTextFieldColors, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(), shape = MaterialTheme.shapes.medium)
+                        ExposedDropdownMenu(expanded = expandedHaste, onDismissRequest = { viewModel.setExpandedHaste(false) }) {
+                            val hastes = remember(rawProdutosForDropdowns, selectedTipo, selectedLente, selectedRosca) {
+                                rawProdutosForDropdowns.filter { p -> (selectedTipo.isEmpty()||p.tipo==selectedTipo) && (selectedLente.isEmpty()||p.lente==selectedLente) && (selectedRosca.isEmpty()||p.rosca==selectedRosca) }.map { it.haste }.filter { it.isNotEmpty() }.distinct().sorted()
                             }
-                            DropdownMenuItem(text = { Text("Todas as Hastes") }, onClick = { onHasteSelected(""); expandedHaste = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
-                            hastes.forEach { haste -> DropdownMenuItem(text = { Text(haste) }, onClick = { onHasteSelected(haste); expandedHaste = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
+                            DropdownMenuItem(text = { Text(stringResource(id = R.string.filtro_opcao_todas_hastes)) }, onClick = { onHasteSelected(""); viewModel.setExpandedHaste(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
+                            hastes.forEach { haste -> DropdownMenuItem(text = { Text(haste) }, onClick = { onHasteSelected(haste); viewModel.setExpandedHaste(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
                         }
                     }
-
-                    ExposedDropdownMenuBox(
-                        expanded = expandedRosca,
-                        onExpandedChange = { closeAllDropdowns(); expandedRosca = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            readOnly = true,
-                            value = selectedRosca.ifEmpty { "Todas" },
-                            onValueChange = {},
-                            label = { Text("Rosca") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRosca) },
-                            colors = filterOutlinedTextFieldColors,
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                .fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedRosca,
-                            onDismissRequest = { expandedRosca = false }
-                        ) {
-                            val roscas = remember(produtos, selectedTipo, selectedLente, selectedHaste) {
-                                produtos.filter { produto ->
-                                    (selectedTipo.isEmpty() || produto.tipo == selectedTipo) &&
-                                            (selectedLente.isEmpty() || produto.lente == selectedLente) &&
-                                            (selectedHaste.isEmpty() || produto.haste == selectedHaste)
-                                }.map { it.rosca }.filter { it.isNotEmpty() }.distinct().sorted()
+                    ExposedDropdownMenuBox(expanded = expandedRosca, onExpandedChange = { viewModel.setExpandedRosca(it) }, Modifier.weight(1f)) {
+                        OutlinedTextField(readOnly = true, value = selectedRosca.ifEmpty { stringResource(id = R.string.filtro_opcao_todas) }, onValueChange = {}, label = { Text(stringResource(id = R.string.filtro_label_rosca)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRosca) }, colors = filterOutlinedTextFieldColors, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(), shape = MaterialTheme.shapes.medium)
+                        ExposedDropdownMenu(expanded = expandedRosca, onDismissRequest = { viewModel.setExpandedRosca(false) }) {
+                            val roscas = remember(rawProdutosForDropdowns, selectedTipo, selectedLente, selectedHaste) {
+                                rawProdutosForDropdowns.filter { p -> (selectedTipo.isEmpty()||p.tipo==selectedTipo) && (selectedLente.isEmpty()||p.lente==selectedLente) && (selectedHaste.isEmpty()||p.haste==selectedHaste) }.map { it.rosca }.filter { it.isNotEmpty() }.distinct().sorted()
                             }
-                            DropdownMenuItem(text = { Text("Todas as Roscas") }, onClick = { onRoscaSelected(""); expandedRosca = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
-                            roscas.forEach { roscaItem -> DropdownMenuItem(text = { Text(roscaItem) }, onClick = { onRoscaSelected(roscaItem); expandedRosca = false }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
+                            DropdownMenuItem(text = { Text(stringResource(id = R.string.filtro_opcao_todas_roscas)) }, onClick = { onRoscaSelected(""); viewModel.setExpandedRosca(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding)
+                            roscas.forEach { rosca -> DropdownMenuItem(text = { Text(rosca) }, onClick = { onRoscaSelected(rosca); viewModel.setExpandedRosca(false) }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding) }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+                Spacer(Modifier.height(16.dp))
                 GradientBorderLightFillButton(
-                    text = "Limpar Filtros e Busca",
+                    text = stringResource(id = R.string.produto_lista_botao_limpar_filtros_busca),
                     vibrantGradient = transparentBrush,
                     lightGradient = nexpartLightGradientFillBotao,
                     textColor = Color.DarkGray,
                     onClick = {
-                        onSearchTextChanged("")
-                        onTipoSelected("")
-                        onLenteSelected("")
-                        onHasteSelected("")
-                        onRoscaSelected("")
-                        closeAllDropdowns()
+                        onClearAllFiltersAndSearch()
+                        viewModel.closeAllDropdownsUiAction()
                         keyboardController?.hide()
-                        scope.launch {
-                            gridState.scrollToItem(0)
-                        }
+                        viewModel.requestScrollToTop()
                     },
                     modifier = Modifier.fillMaxWidth(0.7f).height(44.dp),
                     cornerRadiusDp = 21.dp,
                     borderWidth = 0.dp
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
             }
         }
 
-        val filteredProdutos = remember(produtos, searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
-            val result = produtos.filter { produto ->
-                val searchMatch = if (searchText.isBlank()) {
-                    true
-                } else {
-                    val normalizedSearchText = searchText.normalizeForSearch()
-                    val searchTerms = normalizedSearchText.split(Regex("\\s+")).filter { it.isNotEmpty() }
-                    if (searchTerms.isEmpty()) {
-                        true
-                    } else {
-                        val normalizedProductName = produto.nome.normalizeForSearch()
-                        val normalizedProductCode = produto.codigo.normalizeForSearch()
-                        val normalizedProductAlias = produto.apelido.normalizeForSearch()
-                        val productTextForSearch = "$normalizedProductName $normalizedProductCode $normalizedProductAlias"
-                        searchTerms.all { term ->
-                            productTextForSearch.contains(term)
-                        }
-                    }
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (currentFilteredProdutos.isEmpty() && (searchText.isNotEmpty() || selectedTipo.isNotEmpty() || selectedLente.isNotEmpty() || selectedHaste.isNotEmpty() || selectedRosca.isNotEmpty())) {
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(id = R.string.produto_lista_sem_resultados_filtros))
+            }
+        } else if (currentFilteredProdutos.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(id = R.string.produto_lista_sem_produtos_disponiveis))
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                state = gridState,
+                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
+                contentPadding = PaddingValues(bottom = 16.dp, top = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(currentFilteredProdutos, key = { it.codigo }) { produto ->
+                    ProdutoItem(
+                        produto = produto,
+                        navController = navController,
+                        isNavigatingAway = isProcessingPopBack
+                    )
                 }
-
-                val tipoMatch = selectedTipo.isEmpty() || produto.tipo.equals(selectedTipo, ignoreCase = true)
-                val lenteMatch = selectedLente.isEmpty() || produto.lente.equals(selectedLente, ignoreCase = true)
-                val hasteMatch = selectedHaste.isEmpty() || produto.haste.equals(selectedHaste, ignoreCase = true)
-                val roscaMatch = selectedRosca.isEmpty() || produto.rosca.equals(selectedRosca, ignoreCase = true)
-
-                searchMatch && tipoMatch && lenteMatch && hasteMatch && roscaMatch
-            }
-            result
-        }
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            state = gridState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp)
-                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
-            contentPadding = PaddingValues(bottom = 16.dp, top = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(filteredProdutos, key = { it.codigo }) { produto ->
-                ProdutoItem(produto = produto, navController = navController)
             }
         }
     }

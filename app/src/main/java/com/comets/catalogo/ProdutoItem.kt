@@ -25,7 +25,11 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
 @Composable
-fun ProdutoItem(produto: Produto, navController: NavController) {
+fun ProdutoItem(
+    produto: Produto,
+    navController: NavController,
+    isNavigatingAway: Boolean
+) {
     val context = LocalContext.current
 
     Box {
@@ -35,10 +39,16 @@ fun ProdutoItem(produto: Produto, navController: NavController) {
             Card(
                 modifier = Modifier
                     .padding(7.dp)
-                    .clickable {
-                        val encodedCodigo = URLEncoder.encode(produto.codigo, StandardCharsets.UTF_8.toString())
-                        navController.navigate("${Routes.DETALHES_BASE}/$encodedCodigo")
-                    },
+                    .clickable(
+                        enabled = !isNavigatingAway,
+                        onClick = {
+
+                            if (isNavigatingAway) return@clickable
+
+                            val encodedCodigo = URLEncoder.encode(produto.codigo, StandardCharsets.UTF_8.toString())
+                            navController.navigate("${Routes.DETALHES_BASE}/$encodedCodigo")
+                        }
+                    ),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)

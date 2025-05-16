@@ -1,10 +1,10 @@
 package com.comets.catalogo
 
-import android.app.Activity // Importar Activity
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme // Importar isSystemInDarkTheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -14,12 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.view.WindowCompat // Importar WindowCompat
+import androidx.compose.ui.res.stringResource // Necessário para R.string
+import androidx.core.view.WindowCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.comets.catalogo.ui.theme.CatalogoAppTheme
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,45 +34,32 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppContent() {
     val context = LocalContext.current
-    // Acessa a window somente se o contexto for uma Activity
-    val window = (context as? Activity)?.window // Usar 'as?' para cast seguro
-
-    // isDarkTheme será usado no SideEffect
+    val window = (context as? Activity)?.window
     val isDarkTheme = isSystemInDarkTheme()
 
+    val appViewModel: AppViewModel = viewModel()
+
+    val searchText by appViewModel.searchText.collectAsState()
+    val selectedTipo by appViewModel.selectedTipo.collectAsState()
+    val selectedLente by appViewModel.selectedLente.collectAsState()
+    val selectedHaste by appViewModel.selectedHaste.collectAsState()
+    val selectedRosca by appViewModel.selectedRosca.collectAsState()
+
     CatalogoAppTheme {
-        val colorScheme = MaterialTheme.colorScheme // colorScheme é usado no Surface
+        val colorScheme = MaterialTheme.colorScheme
 
-        // Configurar a barra de status para ser transparente
-        // Este SideEffect é crucial para o modo edge-to-edge
-        if (window != null) { // Só executa se window não for nula
+        if (window != null) {
             SideEffect {
-                // Permite que o conteúdo seja desenhado por trás da barra de status
                 WindowCompat.setDecorFitsSystemWindows(window, false)
-
-                // A cor da barra de status é definida como transparente no Theme XML (themes.xml)
-                // ou pode ser definida programaticamente se necessário (mas transparente é comum para edge-to-edge)
-                // window.statusBarColor = android.graphics.Color.TRANSPARENT // Já deve estar no tema
-
-                // Ajusta a cor dos ícones da barra de status (claro ou escuro)
                 WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = !isDarkTheme
             }
         }
 
-
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = colorScheme.background // Usar cor do tema
+            color = colorScheme.background
         ) {
             val navController = rememberNavController()
-
-            // Estados para os filtros e busca
-            var searchText by remember { mutableStateOf("") }
-            var selectedTipo by remember { mutableStateOf("") }
-            var selectedLente by remember { mutableStateOf("") }
-            var selectedHaste by remember { mutableStateOf("") }
-            var selectedRosca by remember { mutableStateOf("") }
-
 
             NavHost(
                 navController = navController,
@@ -80,34 +68,25 @@ fun AppContent() {
                 composable(Routes.INICIAL) {
                     TelaInicial(navController = navController)
                 }
-                composable(Routes.FALE_CONOSCO) {
-                    TelaFaleConosco(navController = navController)
-                }
                 composable(Routes.LISTA) {
-                    // Obter produtos passando o context
-                    // O 'remember' aqui com 'context' como chave garante que os produtos
-                    // são recarregados se o contexto (ou sua instância) mudar, o que é raro,
-                    // mas é uma boa prática para dependências externas.
-                    // Para dados que mudam com mais frequência, um ViewModel seria melhor.
-                    val produtos = remember(context) { ProdutoRepository.getProdutos(context) }
                     ProdutoLista(
-                        produtos = produtos,
                         searchText = searchText,
                         selectedTipo = selectedTipo,
                         selectedLente = selectedLente,
                         selectedHaste = selectedHaste,
                         selectedRosca = selectedRosca,
-                        onSearchTextChanged = { searchText = it },
-                        onTipoSelected = { selectedTipo = it },
-                        onLenteSelected = { selectedLente = it },
-                        onHasteSelected = { selectedHaste = it },
-                        onRoscaSelected = { selectedRosca = it },
+                        onSearchTextChanged = { appViewModel.onSearchTextChanged(it) },
+                        onTipoSelected = { appViewModel.onTipoSelected(it) },
+                        onLenteSelected = { appViewModel.onLenteSelected(it) },
+                        onHasteSelected = { appViewModel.onHasteSelected(it) },
+                        onRoscaSelected = { appViewModel.onRoscaSelected(it) },
+                        onClearAllFiltersAndSearch = { appViewModel.clearAllFilters() },
                         navController = navController
                     )
                 }
                 composable(Routes.DETALHES) { backStackEntry ->
                     val codigo = backStackEntry.arguments?.getString("codigo")
-                    val produto = remember(context, codigo) { // Re-busca se o código ou contexto mudar
+                    val produto = remember(context, codigo) {
                         codigo?.let { ProdutoRepository.getProdutoPorCodigo(context, it) }
                     }
                     if (produto != null) {
@@ -117,9 +96,12 @@ fun AppContent() {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Produto não encontrado")
+                            Text(stringResource(id = R.string.produto_nao_encontrado))
                         }
                     }
+                }
+                composable(Routes.FALE_CONOSCO) {
+                    TelaFaleConosco(navController = navController)
                 }
             }
         }
