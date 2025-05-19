@@ -12,7 +12,19 @@ navigationCompose = "2.9.0"
 kotlinPluginSerialization = "1.9.23"
 kotlinxSerializationJson = "1.7.3"
 
+junit4 = "4.13.2"
+kotlinxCoroutinesTest = "1.8.0"
+turbine = "1.1.0"
+mockk = "1.13.10"
+
 [libraries]
+
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
+cash-turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+
+
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 ui-util = { group = "androidx.compose.ui", name = "ui-util" }
 foundation = { group = "androidx.compose.foundation", name = "foundation" }

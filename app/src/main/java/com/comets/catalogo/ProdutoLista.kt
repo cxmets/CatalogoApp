@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource // Import para stringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,9 +48,10 @@ fun ProdutoLista(
     onRoscaSelected: (String) -> Unit,
     onClearAllFiltersAndSearch: () -> Unit,
     navController: NavController,
-    viewModel: ProdutoListaViewModel = viewModel()
+    viewModel: ProdutoListaViewModel = viewModel(factory = CatalogoViewModelFactory)
 ) {
     val isLoading by viewModel.isLoading.collectAsState()
+    val loadErrorMessage by viewModel.loadError.collectAsState()
     val currentFilteredProdutos by viewModel.filteredProdutos.collectAsState()
     val rawProdutosForDropdowns by viewModel.rawProdutosForDropdowns.collectAsState()
 
@@ -277,6 +278,10 @@ fun ProdutoLista(
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
+            }
+        } else if (loadErrorMessage != null) {
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                Text(text = loadErrorMessage!!)
             }
         } else if (currentFilteredProdutos.isEmpty() && (searchText.isNotEmpty() || selectedTipo.isNotEmpty() || selectedLente.isNotEmpty() || selectedHaste.isNotEmpty() || selectedRosca.isNotEmpty())) {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {

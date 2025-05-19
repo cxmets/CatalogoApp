@@ -1,26 +1,27 @@
 package com.comets.catalogo
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.text.Normalizer
 
-// Função de extensão para normalizar strings para busca
-private fun String.normalizeForSearch(): String {
-    val normalizedText = Normalizer.normalize(this, Normalizer.Form.NFD)
-    return Regex("\\p{InCombiningDiacriticalMarks}+").replace(normalizedText, "").lowercase().trim()
-}
 
-class ProdutoListaViewModel(application: Application) : AndroidViewModel(application) {
+class ProdutoListaViewModel(
+    application: Application,
+    private val produtoDataSource: ProdutoDataSource // Dependência injetada
+) : AndroidViewModel(application) {
 
     private val _rawProdutos = MutableStateFlow<List<Produto>>(emptyList())
     val rawProdutosForDropdowns: StateFlow<List<Produto>> = _rawProdutos.asStateFlow()
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _loadError = MutableStateFlow<String?>(null)
+    val loadError: StateFlow<String?> = _loadError.asStateFlow()
 
     private val _currentSearchText = MutableStateFlow("")
     private val _currentSelectedTipo = MutableStateFlow("")
@@ -29,16 +30,13 @@ class ProdutoListaViewModel(application: Application) : AndroidViewModel(applica
     private val _currentSelectedRosca = MutableStateFlow("")
 
     val filteredProdutos: StateFlow<List<Produto>> = combine(
-        // Lista de fluxos a serem combinados
-        listOf(
-            _rawProdutos,
-            _currentSearchText,
-            _currentSelectedTipo,
-            _currentSelectedLente,
-            _currentSelectedHaste,
-            _currentSelectedRosca
-        )
-    ) { values -> // 'values' é um Array<Any?> com os últimos valores de cada fluxo
+        _rawProdutos,
+        _currentSearchText,
+        _currentSelectedTipo,
+        _currentSelectedLente,
+        _currentSelectedHaste,
+        _currentSelectedRosca
+    ) { values ->
         @Suppress("UNCHECKED_CAST")
         val produtos = values[0] as? List<Produto> ?: emptyList()
         val searchText = values[1] as? String ?: ""
@@ -47,10 +45,10 @@ class ProdutoListaViewModel(application: Application) : AndroidViewModel(applica
         val haste = values[4] as? String ?: ""
         val rosca = values[5] as? String ?: ""
 
-        if (_isLoading.value) {
-            emptyList<Produto>() // Retorna List<Produto> vazia se estiver carregando
+        if (_isLoading.value || _loadError.value != null) {
+            emptyList<Produto>()
         } else {
-            produtos.filter { produto -> // 'produto' aqui é do tipo Produto
+            produtos.filter { produto ->
                 val searchMatch = if (searchText.isBlank()) {
                     true
                 } else {
@@ -62,7 +60,6 @@ class ProdutoListaViewModel(application: Application) : AndroidViewModel(applica
                         searchTerms.all { term -> productText.contains(term) }
                     }
                 }
-                // Acesso aos campos de 'produto' (ex: produto.tipo) deve funcionar agora
                 val tipoMatch = tipo.isEmpty() || produto.tipo.equals(tipo, ignoreCase = true)
                 val lenteMatch = lente.isEmpty() || produto.lente.equals(lente, ignoreCase = true)
                 val hasteMatch = haste.isEmpty() || produto.haste.equals(haste, ignoreCase = true)
@@ -71,7 +68,7 @@ class ProdutoListaViewModel(application: Application) : AndroidViewModel(applica
                 searchMatch && tipoMatch && lenteMatch && hasteMatch && roscaMatch
             }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList<Produto>()) // Valor inicial tipado
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList<Produto>())
 
     private val _filtrosVisiveis = MutableStateFlow(false)
     val filtrosVisiveis: StateFlow<Boolean> = _filtrosVisiveis.asStateFlow()
@@ -105,7 +102,20 @@ class ProdutoListaViewModel(application: Application) : AndroidViewModel(applica
     private fun loadProdutos() {
         viewModelScope.launch {
             _isLoading.value = true
-            _rawProdutos.value = ProdutoRepository.getProdutos(getApplication<Application>().applicationContext)
+            _loadError.value = null
+            // Usa a instância de produtoDataSource injetada
+            val result = produtoDataSource.getProdutos(getApplication<Application>().applicationContext)
+
+            result.fold(
+                onSuccess = { produtos ->
+                    _rawProdutos.value = produtos
+                },
+                onFailure = { error ->
+                    _rawProdutos.value = emptyList()
+                    _loadError.value = "Falha ao carregar catálogo de produtos." // Considere usar R.string aqui
+                    Log.e("ProdutoListaViewModel", "Erro ao carregar produtos do repositório: ${error.message}", error)
+                }
+            )
             _isLoading.value = false
         }
     }

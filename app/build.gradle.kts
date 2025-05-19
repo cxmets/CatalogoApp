@@ -42,6 +42,12 @@ android {
 
 dependencies {
 
+    // Testes
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.cash.turbine)
+    testImplementation(libs.mockk)
+
     implementation(platform(libs.compose.bom))
 
     implementation(libs.kotlinx.serialization.json)

@@ -1,8 +1,6 @@
 <resources>
     <string name="app_name">CatalogoApp</string>
 
-    <string name="produto_nao_encontrado">Produto não encontrado</string>
-
     <string name="tela_inicial_botao_catalogo">Acessar Catálogo</string>
     <string name="tela_inicial_botao_fale_conosco">Fale Conosco</string>
     <string name="desc_logo_nexpart_tela_inicial">Logo da Nexpart</string>
@@ -54,5 +52,8 @@
     <string name="link_nao_encontrado_ou_navegador">Não foi possível abrir o link (navegador ou app não encontrado?).</string>
     <string name="erro_tentar_abrir_instagram">Erro ao tentar abrir o Instagram.</string>
     <string name="instagram_nao_encontrado_ou_navegador">Não foi possível abrir o Instagram. Verifique se está instalado ou se há um navegador.</string>
+    <string name="erro_codigo_produto_nao_fornecido">Código do produto não fornecido.</string>
+    <string name="erro_carregar_detalhes_produto">Falha ao carregar detalhes do produto.</string>
+    <string name="produto_nao_encontrado">Produto não encontrado.</string>
 
 </resources>

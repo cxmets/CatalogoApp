@@ -29,124 +29,146 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel // Import para viewModel()
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
 @Composable
-fun DetalhesProduto(produto: Produto, navController: NavController) {
+fun DetalhesProduto( // REMOVIDO: produto: Produto parâmetro
+    navController: NavController,
+    viewModel: DetalhesProdutoViewModel = viewModel(factory = CatalogoViewModelFactory)
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val isProcessingPopBack by viewModel.isProcessingPopBack.collectAsState()
     var isImageOverlayVisible by remember { mutableStateOf(false) }
-    var isProcessingPopBack by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 32.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = {
-                if (isProcessingPopBack) {
-                    return@IconButton
-                }
-                isProcessingPopBack = true
-
-                val popped = navController.popBackStack()
-                if (!popped) {
-                    isProcessingPopBack = false
-                }
-            }) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(id = R.string.voltar)
-                )
+    when (val currentState = uiState) {
+        is DetalhesProdutoUiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-            Text(
-                text = produto.codigo,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.width(48.dp))
         }
-
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .background(Color.LightGray)
-                    .clickable(
-                        enabled = !isProcessingPopBack,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        if (isProcessingPopBack) return@clickable
-                        isImageOverlayVisible = true
-                    }
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data("file:///android_asset/${produto.imagemUrl}")
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = produto.nome,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .align(Alignment.Center),
-                    contentScale = ContentScale.Fit
-                )
+        is DetalhesProdutoUiState.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = currentState.message) // Exibe a mensagem de erro do ViewModel
             }
+        }
+        is DetalhesProdutoUiState.Success -> {
+            val produto = currentState.produto // Produto obtido do estado de sucesso
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                    .fillMaxSize()
+                    .padding(top = 32.dp)
             ) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = produto.nome,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-                Text(
-                    text = produto.descricao,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = produto.detalhes,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Start
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = {
+                        if (isProcessingPopBack) {
+                            return@IconButton
+                        }
+                        viewModel.setIsProcessingPopBack(true)
+
+                        val popped = navController.popBackStack()
+                        if (!popped) {
+                            viewModel.setIsProcessingPopBack(false)
+                        }
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.voltar)
+                        )
+                    }
+                    Text(
+                        text = produto.codigo,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
+
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .background(Color.LightGray)
+                            .clickable(
+                                enabled = !isProcessingPopBack,
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                if (isProcessingPopBack) return@clickable
+                                isImageOverlayVisible = true
+                            }
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data("file:///android_asset/${produto.imagemUrl}")
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = produto.nome,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .align(Alignment.Center),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = produto.nome,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(28.dp))
+                        Text(
+                            text = produto.descricao,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = produto.detalhes,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                }
+            }
+
+            if (isImageOverlayVisible) {
+                ZoomableImageOverlay( // ZoomableImageOverlay permanece como está
+                    imageUrl = produto.imagemUrl,
+                    onDismiss = {
+                        isImageOverlayVisible = false
+                    }
                 )
             }
         }
     }
-
-    if (isImageOverlayVisible) {
-        ZoomableImageOverlay(
-            imageUrl = produto.imagemUrl,
-            onDismiss = {
-                isImageOverlayVisible = false
-            }
-        )
-    }
 }
 
+// A função ZoomableImageOverlay permanece inalterada (como no seu último código)
 @Composable
 fun ZoomableImageOverlay(
     imageUrl: String,
