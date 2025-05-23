@@ -1,4 +1,4 @@
-package com.comets.catalogoapp
+package com.comets.catalogoapp.android
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
