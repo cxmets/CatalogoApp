@@ -21,7 +21,6 @@ import com.comets.catalogo.ui.theme.CatalogoAppTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Inicializa a ViewModelFactory
         CatalogoViewModelFactory.initialize(application)
 
         setContent {
@@ -36,9 +35,7 @@ fun AppContent() {
     val window = (context as? Activity)?.window
     val isDarkTheme = isSystemInDarkTheme()
 
-    // Obtém ViewModels usando a Factory
     val appViewModel: AppViewModel = viewModel(factory = CatalogoViewModelFactory)
-    // ProdutoListaViewModel e DetalhesProdutoViewModel serão obtidos dentro de seus respectivos Composables de rota
 
     val searchText by appViewModel.searchText.collectAsState()
     val selectedTipo by appViewModel.selectedTipo.collectAsState()
@@ -59,7 +56,6 @@ fun AppContent() {
             NavHost(navController = navController, startDestination = Routes.INICIAL) {
                 composable(Routes.INICIAL) { TelaInicial(navController = navController) }
                 composable(Routes.LISTA) {
-                    // ProdutoListaViewModel será instanciado dentro de ProdutoLista usando a factory
                     ProdutoLista(
                         searchText = searchText,
                         selectedTipo = selectedTipo,
