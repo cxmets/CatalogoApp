@@ -1,4 +1,4 @@
-package com.comets.catalogoapp
+package com.comets.catalogo
 
 class AndroidPlatform : Platform {
     override val name: String = "Android ${android.os.Build.VERSION.SDK_INT}"

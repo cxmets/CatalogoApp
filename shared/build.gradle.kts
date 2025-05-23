@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinPluginSerialization) // Usando alias do TOML
 }
 
 kotlin {
@@ -31,19 +32,25 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
-        commonMain.dependencies {
-            //put your multiplatform dependencies here
+        val commonMain by getting { // Renomeado para val para clareza
+            dependencies {
+                implementation(libs.kotlinx.serialization.json)
+                // Dependências do Compose Multiplatform serão adicionadas aqui quando movermos a UI
+            }
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
+        val commonTest by getting { // Renomeado para val
+            dependencies {
+                implementation(libs.kotlin.test)
+            }
         }
+        val androidMain by getting
     }
 }
 
 android {
-    namespace = "com.comets.catalogoapp"
+    namespace = "com.comets.catalogo" // Seu namespace para a lib android do shared
     compileSdk = 35
     defaultConfig {
         minSdk = 24
@@ -52,4 +59,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    // Adicionar buildFeatures se for usar DataBinding, ViewBinding, etc. (não necessário para Compose puro)
+    // buildFeatures {
+    //     compose = true // Se for usar compose direto no shared/androidMain UI (menos comum)
+    // }
+    // O plugin do compose compiler é geralmente aplicado no nível do projeto ou no módulo que usa UI Compose
+    // Para Compose Multiplatform, há um plugin org.jetbrains.compose específico.
 }

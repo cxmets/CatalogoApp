@@ -1,4 +1,4 @@
-package com.comets.catalogoapp
+package com.comets.catalogo
 
 import platform.UIKit.UIDevice
 
