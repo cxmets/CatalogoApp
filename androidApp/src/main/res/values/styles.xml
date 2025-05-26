@@ -1,4 +1,0 @@
-<resources>
-    <style name="AppTheme" parent="android:Theme.Material.NoActionBar"/>
-    <string name="app_name">Catalogo Nexpart</string>
-</resources>

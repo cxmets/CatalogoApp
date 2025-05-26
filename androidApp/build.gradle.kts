@@ -42,6 +42,8 @@ android {
 dependencies {
     implementation(project(":shared")) // Dependência crucial do módulo compartilhado
 
+    implementation(libs.google.android.material)
+
     // Compose (usando o Bill of Materials - BOM)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.compose.ui)

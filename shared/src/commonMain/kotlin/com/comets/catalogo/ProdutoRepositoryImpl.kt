@@ -1,7 +1,7 @@
 package com.comets.catalogo
 
-import com.comets.catalogo.asset.AssetReadException // Importa a exceção comum
-import com.comets.catalogo.asset.AssetReader // Importa a classe expect
+import com.comets.catalogo.platform.AssetReader
+import com.comets.catalogo.platform.AssetReadException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.SerializationException
 
@@ -25,13 +25,10 @@ class ProdutoRepositoryImpl(private val assetReader: AssetReader) : ProdutoDataS
             cachedProdutos = produtos
             Result.success(produtos)
         } catch (e: SerializationException) {
-            // Log (usando uma futura abstração KMP de log, ou tratar no ViewModel)
             Result.failure(e)
-        } catch (e: AssetReadException) { // Captura nossa exceção comum
-            // Log
+        } catch (e: AssetReadException) {
             Result.failure(e)
-        } catch (e: Exception) { // Captura outras exceções inesperadas
-            // Log
+        } catch (e: Exception) {
             Result.failure(AssetReadException("Erro inesperado ao carregar produtos: ${e.message}", e))
         }
     }

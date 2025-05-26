@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="app_name_kmp">Catálogo KMP Nexpart</string>
+    <string name="desc_logo_nexpart_tela_inicial">Logo da Nexpart na tela inicial</string>
+    <string name="tela_inicial_botao_catalogo">Acessar Catálogo</string>
+    <string name="tela_inicial_botao_fale_conosco">Fale Conosco</string>
+    <string name="logo_content_description">Logo da Empresa</string>
+
+    <string name="app_name">Catálogo Nexpart</string>
+
+    <string name="erro_codigo_produto_nao_fornecido">Código do produto não fornecido.</string>
+    <string name="produto_nao_encontrado">Produto não encontrado.</string>
+    <string name="erro_carregar_detalhes_produto">Falha ao carregar detalhes do produto.</string>
+    <string name="falha_carregar_catalogo">Falha ao carregar catálogo de produtos.</string>
+
+    <string name="fale_conosco_assunto_email_padrao">Contato via App Catálogo</string>
+    <string name="fale_conosco_mensagem_padrao_whatsapp">Olá! Gostaria de mais informações.</string>
+
+    <string name="erro_tentar_abrir_email">Erro ao tentar abrir o e-mail.</string>
+    <string name="nenhum_app_email_encontrado">Nenhum aplicativo de e-mail encontrado.</string>
+    <string name="erro_tentar_abrir_discador">Erro ao tentar abrir o discador.</string>
+    <string name="nenhum_app_discagem_encontrado">Não foi possível abrir o discador.</string>
+    <string name="erro_tentar_abrir_whatsapp">Erro ao tentar abrir o WhatsApp.</string>
+    <string name="whatsapp_nao_encontrado_ou_navegador">Não foi possível abrir o WhatsApp. Verifique se está instalado ou se há um navegador disponível.</string>
+    <string name="erro_abrir_link">Erro ao abrir o link.</string>
+    <string name="link_nao_encontrado_ou_navegador">Não foi possível abrir o link (navegador ou app não encontrado?).</string>
+    <string name="erro_tentar_abrir_instagram">Erro ao tentar abrir o Instagram.</string>
+    <string name="instagram_nao_encontrado_ou_navegador">Não foi possível abrir o Instagram. Verifique se está instalado ou se há um navegador.</string>
+
+</resources>

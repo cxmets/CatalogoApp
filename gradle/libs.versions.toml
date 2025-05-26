@@ -8,15 +8,20 @@ composeMaterial3 = "1.2.1" # Versão do Compose Material 3 (ex: estável recente
 androidxActivityCompose = "1.9.0" # Versão do Activity Compose (ex: estável recente)
 kotlinPluginSerialization = "2.0.0" # Alinhado com Kotlin
 kotlinxSerializationJson = "1.6.3" # Estável para Kotlinx Serialization
-kotlinxCoroutines = "1.8.0" # Para Coroutines (usado em testes e ViewModels)
+kotlinxCoroutines = "1.8.1" # Para Coroutines (usado em testes e ViewModels)
+jetbrainsCompose = "1.6.10"
+voyager = "1.1.0-beta03"
+mokoResources = "0.24.5"
+googleMaterial = "1.14.0-alpha01"
 
 # Dependências adicionais baseadas no seu app original
-lifecycle = "2.8.3" # Versão do Lifecycle (ViewModels, etc.)
+lifecycle = "2.8.0" # Versão do Lifecycle (ViewModels, etc.)
 navigationCompose = "2.7.7" # Navigation Compose
 coreKtx = "1.13.1" # Core KTX
 accompanistSystemuicontroller = "0.32.0" # Você já usava, verificar se ainda é a melhor opção ou se há alternativas no Compose Material
 coilCompose = "2.6.0"
 composeBom = "2024.06.00" # Compose Bill of Materials (BOM) - Use a última estável
+kmmViewModel = "1.0.0-BETA-3"
 
 # Para Testes (já adicionado)
 junit4 = "4.13.2"
@@ -44,6 +49,15 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-ui-text = { group = "androidx.compose.ui", name = "ui-text"} # Adicionado
 
+voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
+voyager-screenmodel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyager" }
+voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
+
+moko-resources = { module = "dev.icerock.moko:resources", version.ref = "mokoResources" }
+moko-resources-compose = { module = "dev.icerock.moko:resources-compose", version.ref = "mokoResources" }
+
+google-android-material = { group = "com.google.android.material", name = "material", version.ref = "googleMaterial" }
+
 # Activity, Lifecycle & ViewModel
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
@@ -65,6 +79,13 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose"
 # UI Util (se ainda for usada)
 androidx-ui-util = { group = "androidx.compose.ui", name = "ui-util"}
 
+kmp-observableviewmodel-core = { module = "com.rickclephas.kmp:kmp-observableviewmodel-core", version.ref = "kmmViewModel" }
+
+jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "jetbrainsCompose" }
+jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "jetbrainsCompose" }
+jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "jetbrainsCompose" }
+jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "jetbrainsCompose" }
+
 # Testes
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" } # Usando kotlinxCoroutines para versão
@@ -80,9 +101,7 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
-kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinPluginSerialization" }
-# O plugin do compilador Compose para KMP é org.jetbrains.compose, geralmente configurado no buildscript do shared module.
-# Para o androidApp, o plugin kotlin("plugin.compose") ou alias(libs.plugins.compose.compiler) é usado.
-# Vamos adicionar o plugin do compilador Compose aqui para ser usado pelo androidApp via alias.
+kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+moko-resources = { id = "dev.icerock.mobile.multiplatform-resources", version.ref = "mokoResources" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "composeCompiler" } # Usa a versão do Kotlin/Compose Compiler
-jetbrainsCompose = { id = "org.jetbrains.compose", version = "1.6.10" } # Plugin Jetbrains Compose para o módulo shared (verifique a última)
+jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "jetbrainsCompose" }

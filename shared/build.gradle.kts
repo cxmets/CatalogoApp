@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization) // Usando alias do TOML
+    alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.moko.resources)
 }
 
 kotlin {
@@ -12,7 +15,7 @@ kotlin {
         compilations.all {
             compileTaskProvider.configure {
                 compilerOptions {
-                    jvmTarget.set(JvmTarget.JVM_1_8)
+                    jvmTarget.set(JvmTarget.JVM_11)
                 }
             }
         }
@@ -34,10 +37,26 @@ kotlin {
     }
 
     sourceSets {
+        all {
+            languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+        }
+
         val commonMain by getting { // Renomeado para val para clareza
             dependencies {
                 implementation(libs.kotlinx.serialization.json)
-                // Dependências do Compose Multiplatform serão adicionadas aqui quando movermos a UI
+                implementation(libs.kotlinx.coroutines.core)
+                api(libs.kmp.observableviewmodel.core)
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
+
+                implementation(libs.voyager.navigator)
+                implementation(libs.voyager.screenmodel)
+                implementation(libs.voyager.transitions)
+
+                implementation(libs.moko.resources)
+                implementation(libs.moko.resources.compose)
             }
         }
         val commonTest by getting { // Renomeado para val
@@ -45,24 +64,26 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
-        val androidMain by getting
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.androidx.lifecycle.viewmodel.ktx)
+                implementation(libs.androidx.lifecycle.viewmodel.compose)
+            }
+        }
     }
 }
 
 android {
-    namespace = "com.comets.catalogo" // Seu namespace para a lib android do shared
+    namespace = "com.comets.catalogoappkmp" // Seu namespace para a lib android do shared
     compileSdk = 35
     defaultConfig {
         minSdk = 24
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    // Adicionar buildFeatures se for usar DataBinding, ViewBinding, etc. (não necessário para Compose puro)
-    // buildFeatures {
-    //     compose = true // Se for usar compose direto no shared/androidMain UI (menos comum)
-    // }
-    // O plugin do compose compiler é geralmente aplicado no nível do projeto ou no módulo que usa UI Compose
-    // Para Compose Multiplatform, há um plugin org.jetbrains.compose específico.
+    buildFeatures { // É uma boa prática ter isso no android {} block do shared module também
+        compose = true
+    }
 }
