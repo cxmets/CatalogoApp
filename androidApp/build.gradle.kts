@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -31,16 +31,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
 }
 
 dependencies {
-    implementation(projects.shared)
-    implementation(libs.compose.ui)
+    implementation(project(":shared"))
+
+    implementation(compose.ui)
+    implementation(libs.compose.ui.tooling)
     implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.compose.material3)
-    implementation(libs.androidx.activity.compose)
-    debugImplementation(libs.compose.ui.tooling)
+    implementation(compose.foundation)
+    implementation(compose.material3)
 }
