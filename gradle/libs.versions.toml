@@ -4,20 +4,43 @@ agp = "8.7.3"
 compose = "1.8.1"
 serialization = "1.8.1"
 coroutines = "1.10.2"
+jetbrainsCompose = "1.8.1"
 androidxActivityCompose = "1.10.1"
 androidxComposeUi = "1.8.2"
 androidxComposeMaterial3 = "1.3.2"
+iconsExtended = "1.7.8"
+mvvm = "0.16.1"
+coil = "2.7.0"
+coil3 = "3.2.0"
+lifecycle = "2.9.0"
+sysuicontroller = "0.36.0"
 
 [libraries]
 # Kotlinx
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
+components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "jetbrainsCompose"}
+
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil"}
+
+coil-compose3 = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3"}
+coil-compose3-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil3"}
+
+lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" }
+
+accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "sysuicontroller" }
+
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivityCompose" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "androidxComposeUi" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "androidxComposeMaterial3" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "androidxComposeUi" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "androidxComposeUi" }
+material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "iconsExtended"}
+
+mvvm-core = { module = "dev.icerock.moko:mvvm-core", version.ref = "mvvm"}
+mvvm-compose = { module = "dev.icerock.moko:mvvm-compose", version.ref = "mvvm"}
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -27,3 +50,4 @@ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

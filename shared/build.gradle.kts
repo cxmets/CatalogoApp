@@ -1,16 +1,29 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-// import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework // macOS
+// import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework // IOS
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.androidLibrary)
 }
 
 kotlin {
+    // Descomente e configure esta linha se você adicionou a propriedade em gradle.properties
+    // applyDefaultHierarchyTemplate = false // Ou gerencie via gradle.properties
+
     androidTarget {
+        compilations.all {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_1_8)
+                }
+            }
+        }
+    }
+
+    jvm {
         compilations.all {
             compileTaskProvider.configure {
                 compilerOptions {
@@ -57,8 +70,19 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
+
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
+
+                implementation(libs.mvvm.core)
+                implementation(libs.mvvm.compose)
+
+                implementation(libs.coil.compose3)
+                implementation(libs.coil.compose3.core)
+
+                implementation(libs.material.icons.extended)
             }
         }
         val commonTest by getting {
@@ -67,12 +91,17 @@ kotlin {
             }
         }
         val androidMain by getting {
+            dependsOn(commonMain) // Explícito, já que o template está desabilitado
             dependencies {
                 implementation(libs.androidx.compose.ui.tooling.preview)
-                implementation(libs.androidx.compose.ui.tooling)
                 implementation(libs.androidx.activity.compose)
-                implementation(libs.androidx.compose.ui)
-                implementation(libs.androidx.compose.material3)
+            }
+        }
+
+        val jvmMain by getting {
+            dependsOn(commonMain) // Explícito e necessário agora
+            dependencies {
+                // Dependências específicas para JVM, se houver.
             }
         }
 
@@ -81,7 +110,7 @@ kotlin {
         val iosArm64Main by getting
         val iosSimulatorArm64Main by getting
         val iosMain by creating {
-            dependsOn(commonMain.get())
+            dependsOn(commonMain) // Explícito
             iosX64Main.dependsOn(this)
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
@@ -99,5 +128,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    buildFeatures {
+        compose = true
     }
 }
