@@ -3,6 +3,8 @@ package com.comets.catalogokmp.presentation
 import com.comets.catalogokmp.data.ProdutoDataSource
 import com.comets.catalogokmp.data.model.Produto
 import com.comets.catalogokmp.util.normalizeForSearch
+import com.comets.catalogokmp.util.printLogD // Importe o logger
+import com.comets.catalogokmp.util.printLogE  // Importe o logger
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +16,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+private const val TAG = "ProdutoListaViewModel" // Tag para o Log
 
 class ProdutoListaViewModel(
     private val produtoDataSource: ProdutoDataSource
@@ -61,7 +65,7 @@ class ProdutoListaViewModel(
                     if (searchTerms.isEmpty()) true else {
                         val productText = (produto.nome.normalizeForSearch() + " " +
                                 produto.codigo.normalizeForSearch() + " " +
-                                produto.apelido.normalizeForSearch())
+                                (produto.apelido?.normalizeForSearch() ?: "")) // Adicionado null-check para apelido
                         searchTerms.all { term -> productText.contains(term) }
                     }
                 }
@@ -108,15 +112,21 @@ class ProdutoListaViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             _loadError.value = null
+            printLogD(TAG, "Iniciando carregamento de produtos.")
             val result = produtoDataSource.getProdutos()
 
             result.fold(
                 onSuccess = { produtos ->
                     _rawProdutos.value = produtos
+                    printLogD(TAG, "Produtos carregados com sucesso. Quantidade: ${produtos.size}")
+                    if (produtos.isEmpty()) {
+                        printLogE(TAG, "Lista de produtos carregada está vazia.")
+                    }
                 },
                 onFailure = { error ->
                     _rawProdutos.value = emptyList()
-                    _loadError.value = "Falha ao carregar catálogo de produtos."
+                    _loadError.value = "Falha ao carregar catálogo de produtos." // Considere usar R.string aqui através de expect/actual
+                    printLogE(TAG, "Erro ao carregar produtos do repositório: ${error.message}", error)
                 }
             )
             _isLoading.value = false

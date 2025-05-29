@@ -1,3 +1,3 @@
 package com.comets.catalogokmp.util
 
-internal expect fun readProductsJson(): String
+internal expect suspend fun readProductsJson(): String

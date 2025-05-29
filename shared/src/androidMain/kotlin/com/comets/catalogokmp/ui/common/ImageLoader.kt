@@ -3,9 +3,9 @@ package com.comets.catalogokmp.ui.common
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import com.comets.catalogokmp.util.PlatformAppContext
 
 @Composable
 internal actual fun SharedAsyncImage(
@@ -15,8 +15,8 @@ internal actual fun SharedAsyncImage(
     contentScale: ContentScale
 ) {
     AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data("file:///android_asset/$imageUrl") // Carrega dos assets do Android
+        model = ImageRequest.Builder(PlatformAppContext.INSTANCE) // Use o contexto injetado/global
+            .data("file:///android_asset/$imageUrl")
             .build(),
         contentDescription = contentDescription,
         modifier = modifier,

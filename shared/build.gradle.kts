@@ -23,16 +23,6 @@ kotlin {
         }
     }
 
-    jvm {
-        compilations.all {
-            compileTaskProvider.configure {
-                compilerOptions {
-                    jvmTarget.set(JvmTarget.JVM_1_8)
-                }
-            }
-        }
-    }
-
     /*
      * =================================================================
      * BLOCO DE CÓDIGO IOS TEMPORARIAMENTE DESATIVADO PARA WINDOWS
@@ -70,14 +60,15 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.ui)
+                implementation(libs.compose.resources)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
 
-                implementation(libs.mvvm.core)
-                implementation(libs.mvvm.compose)
+                api(libs.mvvm.core)
+                api(libs.mvvm.compose)
 
                 implementation(libs.coil.compose3)
                 implementation(libs.coil.compose3.core)
@@ -91,17 +82,10 @@ kotlin {
             }
         }
         val androidMain by getting {
-            dependsOn(commonMain) // Explícito, já que o template está desabilitado
             dependencies {
                 implementation(libs.androidx.compose.ui.tooling.preview)
                 implementation(libs.androidx.activity.compose)
-            }
-        }
-
-        val jvmMain by getting {
-            dependsOn(commonMain) // Explícito e necessário agora
-            dependencies {
-                // Dependências específicas para JVM, se houver.
+                implementation(libs.compose.resources)
             }
         }
 
