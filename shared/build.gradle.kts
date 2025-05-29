@@ -73,6 +73,13 @@ kotlin {
                 implementation(libs.coil.compose3.core)
 
                 implementation(libs.material.icons.extended)
+
+                api(libs.voyager.navigator)
+                api(libs.voyager.koin)
+                api(libs.voyager.transitions)
+
+                api(libs.koin.core)
+                api(libs.koin.compose)
             }
         }
         val commonTest by getting {
@@ -84,6 +91,8 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.compose.ui.tooling.preview)
                 implementation(libs.androidx.activity.compose)
+
+                api(libs.koin.android)
             }
         }
 

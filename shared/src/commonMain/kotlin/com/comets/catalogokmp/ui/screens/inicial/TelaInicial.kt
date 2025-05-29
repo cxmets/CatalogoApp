@@ -20,22 +20,24 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import catalogokmp.shared.generated.resources.Res
 import catalogokmp.shared.generated.resources.desc_logo_nexpart_tela_inicial
 import catalogokmp.shared.generated.resources.logo_dark
 import catalogokmp.shared.generated.resources.logo_light
 import catalogokmp.shared.generated.resources.tela_inicial_botao_catalogo
 import catalogokmp.shared.generated.resources.tela_inicial_botao_fale_conosco
+import com.comets.catalogokmp.navigation.FaleConoscoVoyagerScreen
+import com.comets.catalogokmp.navigation.ProdutoListaVoyagerScreen
 import com.comets.catalogokmp.ui.common.GradientBorderLightFillButton
 import com.comets.catalogokmp.ui.common.lighten
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun TelaInicial(
-    onNavigateToLista: () -> Unit,
-    onNavigateToFaleConosco: () -> Unit
-) {
+fun TelaInicial() {
+    val navigator = LocalNavigator.currentOrThrow
     val systemIsDarkTheme = isSystemInDarkTheme()
     val backgroundColor = MaterialTheme.colorScheme.background
     val outlineColor = MaterialTheme.colorScheme.outline
@@ -96,7 +98,7 @@ fun TelaInicial(
                 vibrantGradient = nexpartVibrantGradient,
                 lightGradient = nexpartLightGradient,
                 textColor = textoCorBotoes,
-                onClick = onNavigateToLista,
+                onClick = { navigator.push(ProdutoListaVoyagerScreen) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 cornerRadiusDp = 25.dp,
                 borderWidth = 2.dp
@@ -113,7 +115,7 @@ fun TelaInicial(
                 vibrantGradient = nexpartVibrantGradient,
                 lightGradient = nexpartLightGradient,
                 textColor = textoCorBotoes,
-                onClick = onNavigateToFaleConosco,
+                onClick = { navigator.push(FaleConoscoVoyagerScreen) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 cornerRadiusDp = 25.dp,
                 borderWidth = 2.dp

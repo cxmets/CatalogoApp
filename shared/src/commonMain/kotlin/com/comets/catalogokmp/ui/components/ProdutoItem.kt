@@ -27,7 +27,7 @@ import com.comets.catalogokmp.ui.common.SharedAsyncImage
 fun ProdutoItem(
     produto: Produto,
     onItemClick: (produtoId: String) -> Unit,
-    isNavigatingAway: Boolean // Você pode manter isso se for relevante para a lógica de clique
+    isNavigatingAway: Boolean
 ) {
     Box {
         Column(
@@ -46,9 +46,9 @@ fun ProdutoItem(
                     ),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White) // Considere usar cores do tema
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                SharedAsyncImage( // Usa a nossa função KMP
+                SharedAsyncImage(
                     imageUrl = produto.imagemUrl,
                     contentDescription = produto.nome,
                     modifier = Modifier
@@ -64,8 +64,7 @@ fun ProdutoItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 8.dp, end = 8.dp, bottom = 5.dp),
-                textAlign = TextAlign.Center,
-                color = Color.Black // Considere usar cores do tema
+                textAlign = TextAlign.Center
             )
         }
 
@@ -74,7 +73,7 @@ fun ProdutoItem(
                 .align(Alignment.TopStart)
                 .padding(12.dp)
                 .background(Color.Black.copy(alpha = 0.9f), RoundedCornerShape(4.dp))
-                .padding(horizontal = 4.dp, vertical = 2.dp)
+                .padding(3.dp)
         ) {
             Text(
                 text = produto.codigo,

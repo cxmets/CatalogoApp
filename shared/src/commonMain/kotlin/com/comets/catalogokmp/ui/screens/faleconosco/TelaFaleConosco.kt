@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets // Mantenha este import
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars   // Mantenha este import
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -44,10 +44,12 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import catalogokmp.shared.generated.resources.Res // Verifique se este é o import correto gerado
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import catalogokmp.shared.generated.resources.Res
 import catalogokmp.shared.generated.resources.desc_imagem_texto_nexpart_contato
 import catalogokmp.shared.generated.resources.desc_logo_nexpart_topbar
-import catalogokmp.shared.generated.resources.fale_conosco_assunto_email_padrao // Import direto da string
+import catalogokmp.shared.generated.resources.fale_conosco_assunto_email_padrao
 import catalogokmp.shared.generated.resources.fale_conosco_desc_acao_email
 import catalogokmp.shared.generated.resources.fale_conosco_desc_acao_instagram_oficial
 import catalogokmp.shared.generated.resources.fale_conosco_desc_acao_site_nexpart
@@ -85,16 +87,13 @@ import com.comets.catalogokmp.util.abrirWhatsAppPlatform
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaFaleConoscoScreen(
-    onNavigateBack: () -> Unit
-) {
+fun TelaFaleConoscoScreen() {
+    val navigator = LocalNavigator.currentOrThrow
     var isProcessingPopBack by remember { mutableStateOf(false) }
     val systemIsDarkTheme = isSystemInDarkTheme()
 
-    // Resolva as strings aqui, dentro do contexto @Composable
     val mensagemPadraoWhatsAppResolved = stringResource(Res.string.fale_conosco_mensagem_padrao_whatsapp)
     val assuntoEmailPadraoResolved = stringResource(Res.string.fale_conosco_assunto_email_padrao)
 
@@ -106,7 +105,7 @@ fun TelaFaleConoscoScreen(
                     IconButton(onClick = {
                         if (isProcessingPopBack) { return@IconButton }
                         isProcessingPopBack = true
-                        onNavigateBack()
+                        navigator.pop()
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.voltar))
                     }
@@ -128,14 +127,14 @@ fun TelaFaleConoscoScreen(
             )
         },
         modifier = Modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0,0,0,0) // Ajuste para não ter double padding
+        contentWindowInsets = WindowInsets(0,0,0,0)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Aplica padding da TopAppBar
-                .consumeWindowInsets(paddingValues) // Consome o padding da TopAppBar
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom)) // Adiciona padding só para nav bar
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,

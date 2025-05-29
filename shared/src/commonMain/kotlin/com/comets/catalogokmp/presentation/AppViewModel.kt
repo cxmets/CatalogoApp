@@ -1,9 +1,12 @@
 package com.comets.catalogokmp.presentation
 
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class AppViewModel : ViewModel() {
 
@@ -21,6 +24,10 @@ class AppViewModel : ViewModel() {
 
     private val _selectedRosca = MutableStateFlow("")
     val selectedRosca: StateFlow<String> = _selectedRosca.asStateFlow()
+
+    // Novo SharedFlow para o evento de "voltar de detalhes"
+    private val _onNavigateBackFromDetails = MutableSharedFlow<Unit>(replay = 0) // replay=0 para que seja como um evento
+    val onNavigateBackFromDetails = _onNavigateBackFromDetails.asSharedFlow()
 
     fun onSearchTextChanged(newSearchText: String) {
         _searchText.value = newSearchText
@@ -48,5 +55,12 @@ class AppViewModel : ViewModel() {
         _selectedLente.value = ""
         _selectedHaste.value = ""
         _selectedRosca.value = ""
+    }
+
+    fun triggerNavigatedBackFromDetails() {
+        viewModelScope.launch {
+            clearAllFilters() // A lógica de limpar filtros agora está aqui
+            _onNavigateBackFromDetails.emit(Unit)
+        }
     }
 }

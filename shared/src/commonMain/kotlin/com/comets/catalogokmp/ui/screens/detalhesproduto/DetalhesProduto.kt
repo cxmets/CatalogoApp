@@ -1,41 +1,7 @@
 package com.comets.catalogokmp.ui.screens.detalhesproduto
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -44,46 +10,70 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import catalogokmp.shared.generated.resources.Res
 import catalogokmp.shared.generated.resources.detalhes_produto_desc_fechar_zoom
 import catalogokmp.shared.generated.resources.detalhes_produto_desc_imagem_ampliada
 import catalogokmp.shared.generated.resources.voltar
+// DetalhesResult não é mais necessário com esta abordagem
+import com.comets.catalogokmp.presentation.AppViewModel // Precisa do AppViewModel
 import com.comets.catalogokmp.presentation.DetalhesProdutoUiState
 import com.comets.catalogokmp.presentation.DetalhesProdutoViewModel
+import com.comets.catalogokmp.ui.common.PlatformBackHandler
 import com.comets.catalogokmp.ui.common.SharedAsyncImage
 import org.jetbrains.compose.resources.stringResource
 
-
 @Composable
 fun DetalhesProdutoScreen(
-    viewModel: DetalhesProdutoViewModel,
-    onNavigateBack: () -> Unit,
-    onImageDismiss: () -> Unit,
-    isImageOverlayVisible: Boolean,
-    onImageZoomRequested: () -> Unit
+    appViewModel: AppViewModel, // Recebe AppViewModel
+    viewModel: DetalhesProdutoViewModel
 ) {
+    val navigator = LocalNavigator.currentOrThrow
     val uiState by viewModel.uiState.collectAsState()
     val isProcessingPopBack by viewModel.isProcessingPopBack.collectAsState()
 
+    var isImageOverlayVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.setIsProcessingPopBack(false)
+    }
+
+    PlatformBackHandler(enabled = isImageOverlayVisible) {
+        isImageOverlayVisible = false
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0,0,0,0) // Para o Scaffold não aplicar seus próprios insets
+        contentWindowInsets = WindowInsets(0,0,0,0)
     ) { paddingValuesInner ->
         Box(modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValuesInner) // Aplica o padding do Scaffold (nenhum neste caso devido ao contentWindowInsets)
-            .consumeWindowInsets(paddingValuesInner) // Consome qualquer padding aplicado pelo Scaffold
+            .padding(paddingValuesInner)
+            .consumeWindowInsets(paddingValuesInner)
         ) {
             when (val currentState = uiState) {
                 is DetalhesProdutoUiState.Loading -> {
@@ -95,14 +85,19 @@ fun DetalhesProdutoScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .windowInsetsPadding(WindowInsets.systemBars) // Padding para status e nav bar
+                            .windowInsetsPadding(WindowInsets.systemBars)
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(text = currentState.message, textAlign = TextAlign.Center)
                         Spacer(Modifier.height(16.dp))
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(onClick = {
+                            if (isProcessingPopBack) return@IconButton
+                            viewModel.setIsProcessingPopBack(true)
+                            appViewModel.triggerNavigatedBackFromDetails() // Dispara o evento
+                            navigator.pop()
+                        }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.voltar))
                         }
                     }
@@ -115,17 +110,16 @@ fun DetalhesProdutoScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)) // Padding para Status Bar
+                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
                                 .padding(horizontal = 4.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             IconButton(onClick = {
-                                if (isProcessingPopBack) {
-                                    return@IconButton
-                                }
+                                if (isProcessingPopBack) return@IconButton
                                 viewModel.setIsProcessingPopBack(true)
-                                onNavigateBack()
+                                appViewModel.triggerNavigatedBackFromDetails() // Dispara o evento
+                                navigator.pop()
                             }) {
                                 Icon(
                                     Icons.AutoMirrored.Filled.ArrowBack,
@@ -145,7 +139,7 @@ fun DetalhesProdutoScreen(
                         Column(modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)) // Padding para nav bar
+                            .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
                         ) {
                             Box(
                                 modifier = Modifier
@@ -157,7 +151,7 @@ fun DetalhesProdutoScreen(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
                                     ) {
-                                        if (!isProcessingPopBack) onImageZoomRequested()
+                                        if (!isProcessingPopBack) isImageOverlayVisible = true
                                     }
                             ) {
                                 SharedAsyncImage(
@@ -203,8 +197,7 @@ fun DetalhesProdutoScreen(
                     if (isImageOverlayVisible) {
                         ZoomableImageOverlay(
                             imageUrl = produto.imagemUrl,
-                            onDismiss = onImageDismiss,
-                            onActualDismiss = onImageDismiss // Chamado pelo BackHandler interno do overlay se necessário
+                            onDismiss = { isImageOverlayVisible = false }
                         )
                     }
                 }
@@ -216,18 +209,21 @@ fun DetalhesProdutoScreen(
 @Composable
 fun ZoomableImageOverlay(
     imageUrl: String,
-    onDismiss: () -> Unit,
-    onActualDismiss: () -> Unit // Este é para o caso do BackHandler interno do overlay
+    onDismiss: () -> Unit
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     val minScale = 1f
     val maxScale = 5f
 
-    // O BackHandler para o overlay deve ser tratado pela tela que o chama (DetalhesProdutoScreen)
-    // para integrar com o sistema de navegação da plataforma.
-    // No entanto, se o overlay tem sua própria lógica de "voltar" (como resetar zoom antes de fechar),
-    // ela pode ser mantida aqui e chamar onActualDismiss quando o overlay realmente deve fechar.
+    PlatformBackHandler(enabled = true) {
+        if (scale > minScale || offset != Offset.Zero) {
+            scale = minScale
+            offset = Offset.Zero
+        } else {
+            onDismiss()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -236,10 +232,10 @@ fun ZoomableImageOverlay(
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = onDismiss // Clicar fora da imagem (no fundo escuro) fecha
+                onClick = onDismiss
             )
-            .pointerInput(Unit) { /* Consome toques */ }
-            .windowInsetsPadding(WindowInsets.systemBars) // Para o overlay ocupar toda a tela e respeitar insets
+            .pointerInput(Unit) { }
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         SharedAsyncImage(
             imageUrl = imageUrl,
@@ -269,7 +265,6 @@ fun ZoomableImageOverlay(
                             offset = Offset.Zero
                         },
                         onTap = {
-                            // Não fazer nada no tap da imagem, o clique no Box externo fecha
                         }
                     )
                 }
@@ -284,10 +279,10 @@ fun ZoomableImageOverlay(
         )
 
         IconButton(
-            onClick = onDismiss, // Botão X sempre chama o onDismiss passado
+            onClick = onDismiss,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp) // Padding geral para o botão
+                .padding(16.dp)
         ) {
             Icon(
                 imageVector = Icons.Filled.Close,

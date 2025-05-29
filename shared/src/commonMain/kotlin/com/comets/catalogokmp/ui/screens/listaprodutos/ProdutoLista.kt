@@ -59,6 +59,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import catalogokmp.shared.generated.resources.Res
 import catalogokmp.shared.generated.resources.filtro_label_haste
 import catalogokmp.shared.generated.resources.filtro_label_lente
@@ -78,6 +80,7 @@ import catalogokmp.shared.generated.resources.produto_lista_label_pesquisa
 import catalogokmp.shared.generated.resources.produto_lista_sem_produtos_disponiveis
 import catalogokmp.shared.generated.resources.produto_lista_sem_resultados_filtros
 import catalogokmp.shared.generated.resources.voltar
+import com.comets.catalogokmp.navigation.DetalhesProdutoVoyagerScreen
 import com.comets.catalogokmp.presentation.AppViewModel
 import com.comets.catalogokmp.presentation.ProdutoListaViewModel
 import com.comets.catalogokmp.ui.common.GradientBorderLightFillButton
@@ -92,10 +95,10 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ProdutoListaScreen(
     appViewModel: AppViewModel,
-    produtoListaViewModel: ProdutoListaViewModel,
-    onNavigateToDetalhes: (produtoId: String) -> Unit,
-    onNavigateBack: () -> Unit
+    produtoListaViewModel: ProdutoListaViewModel
 ) {
+    val navigator = LocalNavigator.currentOrThrow
+
     val isLoading by produtoListaViewModel.isLoading.collectAsState()
     val loadErrorMessage by produtoListaViewModel.loadError.collectAsState()
     val currentFilteredProdutos by produtoListaViewModel.filteredProdutos.collectAsState()
@@ -114,17 +117,16 @@ fun ProdutoListaScreen(
     val selectedHaste by appViewModel.selectedHaste.collectAsState()
     val selectedRosca by appViewModel.selectedRosca.collectAsState()
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val corDestaqueUnificada = NexpartOrangeClaro
+    val gridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(searchText) { produtoListaViewModel.updateSearchFilter(searchText) }
     LaunchedEffect(selectedTipo) { produtoListaViewModel.updateTipoFilter(selectedTipo) }
     LaunchedEffect(selectedLente) { produtoListaViewModel.updateLenteFilter(selectedLente) }
     LaunchedEffect(selectedHaste) { produtoListaViewModel.updateHasteFilter(selectedHaste) }
     LaunchedEffect(selectedRosca) { produtoListaViewModel.updateRoscaFilter(selectedRosca) }
-
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val corDestaqueUnificada = NexpartOrangeClaro
-
-    val gridState = rememberLazyGridState()
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         produtoListaViewModel.uiEvents.collectLatest { event ->
@@ -138,6 +140,15 @@ fun ProdutoListaScreen(
         }
     }
 
+    // Novo LaunchedEffect para observar o evento de volta de DetalhesProdutoScreen
+    LaunchedEffect(appViewModel.onNavigateBackFromDetails) {
+        appViewModel.onNavigateBackFromDetails.collect {
+            // appViewModel.clearAllFilters() // Já é chamado dentro de triggerNavigatedBackFromDetails()
+            produtoListaViewModel.requestScrollToTop()
+        }
+    }
+
+
     LaunchedEffect(searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
         val allFiltersAreEmptyNow = searchText.isEmpty() &&
                 selectedTipo.isEmpty() &&
@@ -145,8 +156,13 @@ fun ProdutoListaScreen(
                 selectedHaste.isEmpty() &&
                 selectedRosca.isEmpty()
 
-        if (allFiltersAreEmptyNow) {
-            produtoListaViewModel.requestScrollToTop()
+        if (allFiltersAreEmptyNow && !produtoListaViewModel.isLoading.value) { // Evita scroll no carregamento inicial
+            val currentRoute = navigator.lastItem // Verifica se a tela atual é esta
+            // Só faz scroll se esta tela for a última (ativa) e não estivermos vindo de detalhes
+            // A lógica de vir de detalhes é agora tratada pelo SharedFlow
+            if(currentRoute is ProdutoListaVoyagerScreen) {
+                produtoListaViewModel.requestScrollToTop()
+            }
         }
     }
 
@@ -212,9 +228,9 @@ fun ProdutoListaScreen(
                     onClick = {
                         if (isProcessingPopBack) return@IconButton
                         produtoListaViewModel.setIsProcessingPopBack(true)
-                        appViewModel.clearAllFilters()
+                        // appViewModel.clearAllFilters() // Não mais necessário aqui, AppViewModel lida com isso
                         produtoListaViewModel.closeAllDropdownsUiAction()
-                        onNavigateBack()
+                        navigator.pop()
                     },
                     modifier = Modifier.offset(y = 8.dp)
                 ) {
@@ -320,7 +336,7 @@ fun ProdutoListaScreen(
                         lightGradient = nexpartLightGradientFillBotao,
                         textColor = Color.DarkGray,
                         onClick = {
-                            appViewModel.clearAllFilters()
+                            appViewModel.clearAllFilters() // Ação de limpar filtros no botão
                             produtoListaViewModel.closeAllDropdownsUiAction()
                             keyboardController?.hide()
                             produtoListaViewModel.requestScrollToTop()
@@ -357,7 +373,7 @@ fun ProdutoListaScreen(
                         .fillMaxSize()
                         .padding(horizontal = 8.dp)
                         .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp), // Mantido o bottom padding aqui, pois windowInsetsPadding apenas garante espaço, não adiciona padding visual interno se o conteúdo for menor.
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -365,7 +381,7 @@ fun ProdutoListaScreen(
                         ProdutoItem(
                             produto = produto,
                             onItemClick = { produtoId ->
-                                onNavigateToDetalhes(produtoId)
+                                navigator.push(DetalhesProdutoVoyagerScreen(produtoId))
                             },
                             isNavigatingAway = isProcessingPopBack
                         )
