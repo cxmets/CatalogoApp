@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 
 @Composable
-internal expect fun SharedAsyncImage(
+expect fun SharedAsyncImage(
     imageUrl: String,
     contentDescription: String?,
     modifier: Modifier = Modifier,

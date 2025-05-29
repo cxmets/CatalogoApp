@@ -60,7 +60,6 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.ui)
-                implementation(libs.compose.resources)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
 
@@ -85,7 +84,6 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.compose.ui.tooling.preview)
                 implementation(libs.androidx.activity.compose)
-                implementation(libs.compose.resources)
             }
         }
 

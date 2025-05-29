@@ -4,20 +4,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import com.comets.catalogokmp.util.PlatformAppContext
+import catalogokmp.shared.generated.resources.Res
+
 
 @Composable
-internal actual fun SharedAsyncImage(
+actual fun SharedAsyncImage(
     imageUrl: String,
     contentDescription: String?,
     modifier: Modifier,
     contentScale: ContentScale
 ) {
+    val model = if (imageUrl.startsWith("http")) {
+        imageUrl
+    } else {
+        Res.getUri("drawable/$imageUrl")
+    }
     AsyncImage(
-        model = ImageRequest.Builder(PlatformAppContext.INSTANCE) // Use o contexto injetado/global
-            .data("file:///android_asset/$imageUrl")
-            .build(),
+        model = model,
         contentDescription = contentDescription,
         modifier = modifier,
         contentScale = contentScale
