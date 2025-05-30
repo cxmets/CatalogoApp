@@ -4,8 +4,7 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
-// ScreenResultListener não é mais necessário para ProdutoListaVoyagerScreen com esta nova lógica
-import com.comets.catalogokmp.presentation.AppViewModel
+import com.comets.catalogokmp.presentation.AppViewModel // Ainda necessário para ProdutoListaVoyagerScreen
 import com.comets.catalogokmp.presentation.DetalhesProdutoViewModel
 import com.comets.catalogokmp.presentation.ProdutoListaViewModel
 import com.comets.catalogokmp.ui.screens.detalhesproduto.DetalhesProdutoScreen
@@ -23,7 +22,7 @@ object TelaInicialScreen : Screen {
     }
 }
 
-object ProdutoListaVoyagerScreen : Screen { // Não precisa mais de ScreenResultListener
+object ProdutoListaVoyagerScreen : Screen {
     override val key: ScreenKey = uniqueScreenKey
     @Composable
     override fun Content() {
@@ -41,12 +40,10 @@ data class DetalhesProdutoVoyagerScreen(val produtoId: String) : Screen {
     override val key: ScreenKey = uniqueScreenKey
     @Composable
     override fun Content() {
-        val appViewModel: AppViewModel = koinInject() // Injeta AppViewModel aqui também
         val detalhesViewModel: DetalhesProdutoViewModel = koinInject {
             parametersOf(produtoId)
         }
         DetalhesProdutoScreen(
-            appViewModel = appViewModel, // Passa para o Composable da UI
             viewModel = detalhesViewModel
         )
     }

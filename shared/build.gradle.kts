@@ -1,5 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-// import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework // IOS
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,26 +7,22 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinCocoapods)
 }
 
 kotlin {
-    // Descomente e configure esta linha se você adicionou a propriedade em gradle.properties
-    // applyDefaultHierarchyTemplate = false // Ou gerencie via gradle.properties
-
     androidTarget {
         compilations.all {
             compileTaskProvider.configure {
                 compilerOptions {
                     jvmTarget.set(JvmTarget.JVM_1_8)
+                    freeCompilerArgs.add("-Xexpect-actual-classes")
                 }
             }
         }
     }
 
-    /*
-     * =================================================================
-     * BLOCO DE CÓDIGO IOS TEMPORARIAMENTE DESATIVADO PARA WINDOWS
-     * =================================================================
+
     val xcf = XCFramework()
     listOf(
         iosX64(),
@@ -51,7 +47,7 @@ kotlin {
             isStatic = true
         }
     }
-    */
+
 
     sourceSets {
         val commonMain by getting {
@@ -96,17 +92,11 @@ kotlin {
             }
         }
 
-        /*
         val iosX64Main by getting
         val iosArm64Main by getting
         val iosSimulatorArm64Main by getting
         val iosMain by creating {
-            dependsOn(commonMain) // Explícito
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
         }
-        */
     }
 }
 

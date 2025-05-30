@@ -72,25 +72,18 @@ import catalogokmp.shared.generated.resources.tela_fale_conosco_titulo_topbar
 import catalogokmp.shared.generated.resources.text_dark
 import catalogokmp.shared.generated.resources.text_light
 import catalogokmp.shared.generated.resources.voltar
-import com.comets.catalogokmp.util.EMAIL_EMPRESA_VAL
-import com.comets.catalogokmp.util.INSTAGRAM_PROFILE_NAME
-import com.comets.catalogokmp.util.INSTAGRAM_URL_VAL
-import com.comets.catalogokmp.util.NUMERO_TELEFONE_DISCADOR_VAL
-import com.comets.catalogokmp.util.TELEFONE_EMPRESA_VAL
-import com.comets.catalogokmp.util.WEBSITE_NAME
-import com.comets.catalogokmp.util.WEBSITE_URL_VAL
-import com.comets.catalogokmp.util.abrirDiscadorPlatform
-import com.comets.catalogokmp.util.abrirEmailPlatform
-import com.comets.catalogokmp.util.abrirInstagramPlatform
-import com.comets.catalogokmp.util.abrirUrlGenericaPlatform
-import com.comets.catalogokmp.util.abrirWhatsAppPlatform
+import com.comets.catalogokmp.util.AppConstants
+import com.comets.catalogokmp.util.IntentHandler
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TelaFaleConoscoScreen() {
     val navigator = LocalNavigator.currentOrThrow
+    val intentHandler: IntentHandler = koinInject()
+
     var isProcessingPopBack by remember { mutableStateOf(false) }
     val systemIsDarkTheme = isSystemInDarkTheme()
 
@@ -158,42 +151,42 @@ fun TelaFaleConoscoScreen() {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 ContactItem(
                     iconPainter = painterResource(Res.drawable.i_mail),
-                    text = stringResource(Res.string.fale_conosco_label_email, EMAIL_EMPRESA_VAL),
-                    contentDescription = stringResource(Res.string.fale_conosco_desc_acao_email, EMAIL_EMPRESA_VAL),
+                    text = stringResource(Res.string.fale_conosco_label_email, AppConstants.EMAIL_EMPRESA_VAL),
+                    contentDescription = stringResource(Res.string.fale_conosco_desc_acao_email, AppConstants.EMAIL_EMPRESA_VAL),
                     enabled = !isProcessingPopBack,
-                    onClick = { abrirEmailPlatform(EMAIL_EMPRESA_VAL, assuntoEmailPadraoResolved) }
+                    onClick = { intentHandler.abrirEmail(AppConstants.EMAIL_EMPRESA_VAL, assuntoEmailPadraoResolved) }
                 )
 
                 ContactItem(
                     iconPainter = painterResource(Res.drawable.i_phone),
-                    text = stringResource(Res.string.fale_conosco_label_telefone, NUMERO_TELEFONE_DISCADOR_VAL),
-                    contentDescription = stringResource(Res.string.fale_conosco_desc_acao_telefone, NUMERO_TELEFONE_DISCADOR_VAL),
+                    text = stringResource(Res.string.fale_conosco_label_telefone, AppConstants.NUMERO_TELEFONE_DISCADOR_VAL),
+                    contentDescription = stringResource(Res.string.fale_conosco_desc_acao_telefone, AppConstants.NUMERO_TELEFONE_DISCADOR_VAL),
                     enabled = !isProcessingPopBack,
-                    onClick = { abrirDiscadorPlatform(NUMERO_TELEFONE_DISCADOR_VAL) }
+                    onClick = { intentHandler.abrirDiscador(AppConstants.NUMERO_TELEFONE_DISCADOR_VAL) }
                 )
 
                 ContactItem(
                     iconPainter = painterResource(Res.drawable.i_whatsapp),
-                    text = stringResource(Res.string.fale_conosco_label_whatsapp, TELEFONE_EMPRESA_VAL),
-                    contentDescription = stringResource(Res.string.fale_conosco_desc_acao_whatsapp, TELEFONE_EMPRESA_VAL),
+                    text = stringResource(Res.string.fale_conosco_label_whatsapp, AppConstants.TELEFONE_EMPRESA_VAL),
+                    contentDescription = stringResource(Res.string.fale_conosco_desc_acao_whatsapp, AppConstants.TELEFONE_EMPRESA_VAL),
                     enabled = !isProcessingPopBack,
-                    onClick = { abrirWhatsAppPlatform(TELEFONE_EMPRESA_VAL, mensagemPadraoWhatsAppResolved) }
+                    onClick = { intentHandler.abrirWhatsApp(AppConstants.TELEFONE_EMPRESA_VAL, mensagemPadraoWhatsAppResolved) }
                 )
 
                 ContactItem(
                     iconPainter = painterResource(Res.drawable.i_instagram),
-                    text = stringResource(Res.string.fale_conosco_label_instagram, INSTAGRAM_PROFILE_NAME),
+                    text = stringResource(Res.string.fale_conosco_label_instagram, AppConstants.INSTAGRAM_PROFILE_NAME),
                     contentDescription = stringResource(Res.string.fale_conosco_desc_acao_instagram_oficial),
                     enabled = !isProcessingPopBack,
-                    onClick = { abrirInstagramPlatform(INSTAGRAM_URL_VAL) }
+                    onClick = { intentHandler.abrirInstagram(AppConstants.INSTAGRAM_URL_VAL) }
                 )
 
                 ContactItem(
                     iconPainter = painterResource(Res.drawable.i_web),
-                    text = stringResource(Res.string.fale_conosco_label_site, WEBSITE_NAME),
+                    text = stringResource(Res.string.fale_conosco_label_site, AppConstants.WEBSITE_NAME),
                     contentDescription = stringResource(Res.string.fale_conosco_desc_acao_site_nexpart),
                     enabled = !isProcessingPopBack,
-                    onClick = { abrirUrlGenericaPlatform(WEBSITE_URL_VAL) }
+                    onClick = { intentHandler.abrirUrlGenerica(AppConstants.WEBSITE_URL_VAL) }
                 )
             }
 
@@ -235,7 +228,7 @@ fun ContactItem(
         ) {
             Icon(
                 painter = iconPainter,
-                contentDescription = null,
+                contentDescription = contentDescription,
                 modifier = Modifier.size(40.dp),
                 tint = Color.Unspecified
             )

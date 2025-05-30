@@ -140,32 +140,6 @@ fun ProdutoListaScreen(
         }
     }
 
-    // Novo LaunchedEffect para observar o evento de volta de DetalhesProdutoScreen
-    LaunchedEffect(appViewModel.onNavigateBackFromDetails) {
-        appViewModel.onNavigateBackFromDetails.collect {
-            // appViewModel.clearAllFilters() // Já é chamado dentro de triggerNavigatedBackFromDetails()
-            produtoListaViewModel.requestScrollToTop()
-        }
-    }
-
-
-    LaunchedEffect(searchText, selectedTipo, selectedLente, selectedHaste, selectedRosca) {
-        val allFiltersAreEmptyNow = searchText.isEmpty() &&
-                selectedTipo.isEmpty() &&
-                selectedLente.isEmpty() &&
-                selectedHaste.isEmpty() &&
-                selectedRosca.isEmpty()
-
-        if (allFiltersAreEmptyNow && !produtoListaViewModel.isLoading.value) { // Evita scroll no carregamento inicial
-            val currentRoute = navigator.lastItem // Verifica se a tela atual é esta
-            // Só faz scroll se esta tela for a última (ativa) e não estivermos vindo de detalhes
-            // A lógica de vir de detalhes é agora tratada pelo SharedFlow
-            if(currentRoute is ProdutoListaVoyagerScreen) {
-                produtoListaViewModel.requestScrollToTop()
-            }
-        }
-    }
-
     val searchTextFieldColors = TextFieldDefaults.colors(
         focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
         disabledContainerColor = Color.Transparent, errorContainerColor = Color.Transparent,
@@ -228,7 +202,8 @@ fun ProdutoListaScreen(
                     onClick = {
                         if (isProcessingPopBack) return@IconButton
                         produtoListaViewModel.setIsProcessingPopBack(true)
-                        // appViewModel.clearAllFilters() // Não mais necessário aqui, AppViewModel lida com isso
+                        appViewModel.clearAllFilters()
+                        produtoListaViewModel.requestScrollToTop()
                         produtoListaViewModel.closeAllDropdownsUiAction()
                         navigator.pop()
                     },
@@ -336,7 +311,7 @@ fun ProdutoListaScreen(
                         lightGradient = nexpartLightGradientFillBotao,
                         textColor = Color.DarkGray,
                         onClick = {
-                            appViewModel.clearAllFilters() // Ação de limpar filtros no botão
+                            appViewModel.clearAllFilters()
                             produtoListaViewModel.closeAllDropdownsUiAction()
                             keyboardController?.hide()
                             produtoListaViewModel.requestScrollToTop()
@@ -357,34 +332,55 @@ fun ProdutoListaScreen(
                 Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                     Text(text = loadErrorMessage!!)
                 }
-            } else if (currentFilteredProdutos.isEmpty() && (searchText.isNotEmpty() || selectedTipo.isNotEmpty() || selectedLente.isNotEmpty() || selectedHaste.isNotEmpty() || selectedRosca.isNotEmpty())) {
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text(stringResource(Res.string.produto_lista_sem_resultados_filtros))
-                }
-            } else if (currentFilteredProdutos.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text(stringResource(Res.string.produto_lista_sem_produtos_disponiveis))
-                }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    state = gridState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp)
-                        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(currentFilteredProdutos, key = { it.codigo }) { produto ->
-                        ProdutoItem(
-                            produto = produto,
-                            onItemClick = { produtoId ->
-                                navigator.push(DetalhesProdutoVoyagerScreen(produtoId))
-                            },
-                            isNavigatingAway = isProcessingPopBack
-                        )
+                if (rawProdutosForDropdowns.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Text(stringResource(Res.string.produto_lista_sem_produtos_disponiveis))
+                    }
+                } else if (currentFilteredProdutos.isEmpty()) {
+                    val isAnyFilterActive = searchText.isNotEmpty() ||
+                            selectedTipo.isNotEmpty() ||
+                            selectedLente.isNotEmpty() ||
+                            selectedHaste.isNotEmpty() ||
+                            selectedRosca.isNotEmpty()
+                    if (isAnyFilterActive) {
+                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                            Text(stringResource(Res.string.produto_lista_sem_resultados_filtros))
+                        }
+                    } else {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            state = gridState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 8.dp)
+                                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {}
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        state = gridState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp)
+                            .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
+                        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(currentFilteredProdutos, key = { it.codigo }) { produto ->
+                            ProdutoItem(
+                                produto = produto,
+                                onItemClick = { produtoId ->
+                                    navigator.push(DetalhesProdutoVoyagerScreen(produtoId))
+                                },
+                                isNavigatingAway = isProcessingPopBack
+                            )
+                        }
                     }
                 }
             }

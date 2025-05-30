@@ -3,8 +3,6 @@ package com.comets.catalogokmp.presentation
 import com.comets.catalogokmp.data.ProdutoDataSource
 import com.comets.catalogokmp.data.model.Produto
 import com.comets.catalogokmp.util.normalizeForSearch
-import com.comets.catalogokmp.util.printLogD // Importe o logger
-import com.comets.catalogokmp.util.printLogE  // Importe o logger
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -17,10 +15,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-private const val TAG = "ProdutoListaViewModel" // Tag para o Log
-
 class ProdutoListaViewModel(
-    private val produtoDataSource: ProdutoDataSource
+    private val produtoDataSource: ProdutoDataSource,
+    appViewModel: AppViewModel // Recebe AppViewModel para ler os estados iniciais dos filtros
 ) : ViewModel() {
 
     private val _rawProdutos = MutableStateFlow<List<Produto>>(emptyList())
@@ -32,11 +29,12 @@ class ProdutoListaViewModel(
     private val _loadError = MutableStateFlow<String?>(null)
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
 
-    private val _currentSearchText = MutableStateFlow("")
-    private val _currentSelectedTipo = MutableStateFlow("")
-    private val _currentSelectedLente = MutableStateFlow("")
-    private val _currentSelectedHaste = MutableStateFlow("")
-    private val _currentSelectedRosca = MutableStateFlow("")
+    // Inicializa os estados internos com os valores atuais do AppViewModel
+    private val _currentSearchText = MutableStateFlow(appViewModel.searchText.value)
+    private val _currentSelectedTipo = MutableStateFlow(appViewModel.selectedTipo.value)
+    private val _currentSelectedLente = MutableStateFlow(appViewModel.selectedLente.value)
+    private val _currentSelectedHaste = MutableStateFlow(appViewModel.selectedHaste.value)
+    private val _currentSelectedRosca = MutableStateFlow(appViewModel.selectedRosca.value)
 
     val filteredProdutos: StateFlow<List<Produto>> = combine(
         _rawProdutos,
@@ -65,7 +63,7 @@ class ProdutoListaViewModel(
                     if (searchTerms.isEmpty()) true else {
                         val productText = (produto.nome.normalizeForSearch() + " " +
                                 produto.codigo.normalizeForSearch() + " " +
-                                (produto.apelido?.normalizeForSearch() ?: "")) // Adicionado null-check para apelido
+                                produto.apelido.normalizeForSearch())
                         searchTerms.all { term -> productText.contains(term) }
                     }
                 }
@@ -112,32 +110,51 @@ class ProdutoListaViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             _loadError.value = null
-            printLogD(TAG, "Iniciando carregamento de produtos.")
             val result = produtoDataSource.getProdutos()
 
             result.fold(
                 onSuccess = { produtos ->
                     _rawProdutos.value = produtos
-                    printLogD(TAG, "Produtos carregados com sucesso. Quantidade: ${produtos.size}")
-                    if (produtos.isEmpty()) {
-                        printLogE(TAG, "Lista de produtos carregada está vazia.")
-                    }
                 },
                 onFailure = { error ->
                     _rawProdutos.value = emptyList()
-                    _loadError.value = "Falha ao carregar catálogo de produtos." // Considere usar R.string aqui através de expect/actual
-                    printLogE(TAG, "Erro ao carregar produtos do repositório: ${error.message}", error)
+                    _loadError.value = "Falha ao carregar catálogo de produtos."
                 }
             )
             _isLoading.value = false
         }
     }
 
-    fun updateSearchFilter(text: String) { _currentSearchText.value = text }
-    fun updateTipoFilter(tipo: String) { _currentSelectedTipo.value = tipo }
-    fun updateLenteFilter(lente: String) { _currentSelectedLente.value = lente }
-    fun updateHasteFilter(haste: String) { _currentSelectedHaste.value = haste }
-    fun updateRoscaFilter(rosca: String) { _currentSelectedRosca.value = rosca }
+    fun updateSearchFilter(text: String) {
+        if (_currentSearchText.value != text) {
+            _currentSearchText.value = text
+            requestScrollToTop()
+        }
+    }
+    fun updateTipoFilter(tipo: String) {
+        if (_currentSelectedTipo.value != tipo) {
+            _currentSelectedTipo.value = tipo
+            requestScrollToTop()
+        }
+    }
+    fun updateLenteFilter(lente: String) {
+        if (_currentSelectedLente.value != lente) {
+            _currentSelectedLente.value = lente
+            requestScrollToTop()
+        }
+    }
+    fun updateHasteFilter(haste: String) {
+        if (_currentSelectedHaste.value != haste) {
+            _currentSelectedHaste.value = haste
+            requestScrollToTop()
+        }
+    }
+    fun updateRoscaFilter(rosca: String) {
+        if (_currentSelectedRosca.value != rosca) {
+            _currentSelectedRosca.value = rosca
+            requestScrollToTop()
+        }
+    }
 
     fun toggleFiltrosVisiveis() { _filtrosVisiveis.value = !_filtrosVisiveis.value }
 

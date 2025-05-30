@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 class DetalhesProdutoViewModel(
     private val produtoDataSource: ProdutoDataSource,
-    private val codigoProduto: String? // Recebe o código diretamente
+    codigoProduto: String?
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<DetalhesProdutoUiState>(DetalhesProdutoUiState.Loading)
@@ -23,8 +23,6 @@ class DetalhesProdutoViewModel(
         if (codigoProduto != null) {
             loadProduto(codigoProduto)
         } else {
-            // Idealmente, teríamos acesso a strings de recursos de forma KMP.
-            // Por ora, uma string literal ou uma expect/actual para strings.
             _uiState.value = DetalhesProdutoUiState.Error("Código do produto não fornecido.")
         }
     }
