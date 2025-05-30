@@ -1,9 +1,10 @@
 package com.comets.catalogokmp.presentation
 
 import com.comets.catalogokmp.data.model.Produto
+import org.jetbrains.compose.resources.StringResource
 
 sealed interface DetalhesProdutoUiState {
-    object Loading : DetalhesProdutoUiState
+    data object Loading : DetalhesProdutoUiState
     data class Success(val produto: Produto) : DetalhesProdutoUiState
-    data class Error(val message: String) : DetalhesProdutoUiState
+    data class Error(val messageResource: StringResource) : DetalhesProdutoUiState
 }

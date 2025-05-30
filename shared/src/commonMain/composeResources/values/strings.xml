@@ -18,7 +18,7 @@
     <string name="filtro_opcao_todas_lentes">Todas as Lentes</string>
     <string name="filtro_opcao_todas_hastes">Todas as Hastes</string>
     <string name="filtro_opcao_todas_roscas">Todas as Roscas</string>
-    <string name="produto_lista_botao_limpar_filtros_busca">Limpar Filtros e Busca</string>
+    <string name="produto_lista_botao_limpar_filtros">Limpar Filtros</string>
     <string name="produto_lista_sem_resultados_filtros">Nenhum produto encontrado com os filtros aplicados.</string>
     <string name="produto_lista_sem_produtos_disponiveis">Nenhum produto disponível no memento.</string>
 
@@ -42,6 +42,15 @@
     <string name="fale_conosco_assunto_email_padrao">Contato via App Catálogo</string>
     <string name="fale_conosco_mensagem_padrao_whatsapp">Olá! Gostaria de mais informações.</string>
 
+    <string name="sort_button_description">Classificar produtos</string>
+    <string name="button_classify">Classificar</string>
+    <string name="sort_by_name_asc">Nome (A-Z)</string>
+    <string name="sort_by_name_desc">Nome (Z-A)</string>
+    <string name="sort_by_code_asc">Código (Crescente)</string>
+    <string name="sort_by_code_desc">Código (Decrescente)</string>
+    <string name="sort_by_type_asc">Tipo (A-Z)</string>
+    <string name="sort_by_type_desc">Tipo (Z-A)</string>
+
     <string name="erro_tentar_abrir_email">Erro ao tentar abrir o e-mail.</string>
     <string name="nenhum_app_email_encontrado">Nenhum aplicativo de e-mail encontrado.</string>
     <string name="erro_tentar_abrir_discador">Erro ao tentar abrir o discador.</string>
@@ -55,5 +64,6 @@
     <string name="erro_codigo_produto_nao_fornecido">Código do produto não fornecido.</string>
     <string name="erro_carregar_detalhes_produto">Falha ao carregar detalhes do produto.</string>
     <string name="produto_nao_encontrado">Produto não encontrado.</string>
+    <string name="falha_carregar_catalogo_produtos">Falha ao carregar catálogo de produtos.</string>
 
 </resources>

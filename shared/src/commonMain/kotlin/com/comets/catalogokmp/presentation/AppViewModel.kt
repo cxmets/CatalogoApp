@@ -1,11 +1,12 @@
 package com.comets.catalogokmp.presentation
 
-import com.comets.catalogokmp.data.ProdutoDataSource // Importe ProdutoDataSource
+import com.comets.catalogokmp.data.ProdutoDataSource
+import com.comets.catalogokmp.model.SortOption // Importe SortOption
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch // Mantenha ou adicione se removido anteriormente
+import kotlinx.coroutines.launch
 
 class AppViewModel(
     private val produtoDataSource: ProdutoDataSource
@@ -25,6 +26,9 @@ class AppViewModel(
 
     private val _selectedRosca = MutableStateFlow("")
     val selectedRosca: StateFlow<String> = _selectedRosca.asStateFlow()
+
+    private val _selectedSortOption = MutableStateFlow(SortOption.DEFAULT)
+    val selectedSortOption: StateFlow<SortOption> = _selectedSortOption.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -50,6 +54,10 @@ class AppViewModel(
 
     fun onRoscaSelected(newRosca: String) {
         _selectedRosca.value = newRosca
+    }
+
+    fun onSortOptionSelected(sortOption: SortOption) {
+        _selectedSortOption.value = sortOption
     }
 
     fun clearAllFilters() {

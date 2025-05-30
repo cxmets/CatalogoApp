@@ -110,7 +110,7 @@ fun DetalhesProdutoScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(text = currentState.message, textAlign = TextAlign.Center)
+                        Text(text = stringResource(currentState.messageResource), textAlign = TextAlign.Center)
                         Spacer(Modifier.height(16.dp))
                         IconButton(onClick = {
                             if (isProcessingPopBack) return@IconButton

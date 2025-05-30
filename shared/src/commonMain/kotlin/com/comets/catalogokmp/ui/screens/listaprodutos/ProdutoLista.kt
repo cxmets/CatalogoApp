@@ -1,5 +1,6 @@
 package com.comets.catalogokmp.ui.screens.listaprodutos
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,20 +19,25 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FilterListOff
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -40,6 +46,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -50,18 +57,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import catalogokmp.shared.generated.resources.Res
+import catalogokmp.shared.generated.resources.button_classify
 import catalogokmp.shared.generated.resources.filtro_label_haste
 import catalogokmp.shared.generated.resources.filtro_label_lente
 import catalogokmp.shared.generated.resources.filtro_label_rosca
@@ -72,14 +85,16 @@ import catalogokmp.shared.generated.resources.filtro_opcao_todas_lentes
 import catalogokmp.shared.generated.resources.filtro_opcao_todas_roscas
 import catalogokmp.shared.generated.resources.filtro_opcao_todos
 import catalogokmp.shared.generated.resources.filtro_opcao_todos_tipos
-import catalogokmp.shared.generated.resources.produto_lista_botao_limpar_filtros_busca
+import catalogokmp.shared.generated.resources.produto_lista_botao_limpar_filtros
 import catalogokmp.shared.generated.resources.produto_lista_desc_limpar_pesquisa
 import catalogokmp.shared.generated.resources.produto_lista_desc_mostrar_filtros
 import catalogokmp.shared.generated.resources.produto_lista_desc_ocultar_filtros
 import catalogokmp.shared.generated.resources.produto_lista_label_pesquisa
 import catalogokmp.shared.generated.resources.produto_lista_sem_produtos_disponiveis
 import catalogokmp.shared.generated.resources.produto_lista_sem_resultados_filtros
+import catalogokmp.shared.generated.resources.sort_button_description
 import catalogokmp.shared.generated.resources.voltar
+import com.comets.catalogokmp.model.SortOption
 import com.comets.catalogokmp.navigation.DetalhesProdutoVoyagerScreen
 import com.comets.catalogokmp.presentation.AppViewModel
 import com.comets.catalogokmp.presentation.ProdutoListaViewModel
@@ -88,6 +103,8 @@ import com.comets.catalogokmp.ui.common.lighten
 import com.comets.catalogokmp.ui.components.ProdutoItem
 import com.comets.catalogokmp.ui.theme.NexpartOrangeClaro
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -98,6 +115,8 @@ fun ProdutoListaScreen(
     produtoListaViewModel: ProdutoListaViewModel
 ) {
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
+    val gridState = rememberLazyGridState()
 
     val isLoading by produtoListaViewModel.isLoading.collectAsState()
     val loadErrorMessage by produtoListaViewModel.loadError.collectAsState()
@@ -116,23 +135,30 @@ fun ProdutoListaScreen(
     val selectedLente by appViewModel.selectedLente.collectAsState()
     val selectedHaste by appViewModel.selectedHaste.collectAsState()
     val selectedRosca by appViewModel.selectedRosca.collectAsState()
+    val selectedSortOption by appViewModel.selectedSortOption.collectAsState()
+
+    var sortDropdownExpanded by remember { mutableStateOf(false) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val corDestaqueUnificada = NexpartOrangeClaro
-    val gridState = rememberLazyGridState()
-    val scope = rememberCoroutineScope()
+    val buttonHeight = 44.dp
+    val buttonCornerRadius = 21.dp
 
     LaunchedEffect(searchText) { produtoListaViewModel.updateSearchFilter(searchText) }
     LaunchedEffect(selectedTipo) { produtoListaViewModel.updateTipoFilter(selectedTipo) }
     LaunchedEffect(selectedLente) { produtoListaViewModel.updateLenteFilter(selectedLente) }
     LaunchedEffect(selectedHaste) { produtoListaViewModel.updateHasteFilter(selectedHaste) }
     LaunchedEffect(selectedRosca) { produtoListaViewModel.updateRoscaFilter(selectedRosca) }
+    LaunchedEffect(selectedSortOption) { produtoListaViewModel.updateSortOption(selectedSortOption) }
 
     LaunchedEffect(Unit) {
         produtoListaViewModel.uiEvents.collectLatest { event ->
             when (event) {
                 is ProdutoListaViewModel.UiEvent.ScrollToTop -> {
                     scope.launch {
+                        snapshotFlow { produtoListaViewModel.isLoading.value }
+                            .filter { !it }
+                            .first()
                         gridState.scrollToItem(0)
                     }
                 }
@@ -203,6 +229,7 @@ fun ProdutoListaScreen(
                         if (isProcessingPopBack) return@IconButton
                         produtoListaViewModel.setIsProcessingPopBack(true)
                         appViewModel.clearAllFilters()
+                        appViewModel.onSortOptionSelected(SortOption.DEFAULT)
                         produtoListaViewModel.requestScrollToTop()
                         produtoListaViewModel.closeAllDropdownsUiAction()
                         navigator.pop()
@@ -305,21 +332,61 @@ fun ProdutoListaScreen(
                         }
                     }
                     Spacer(Modifier.height(16.dp))
-                    GradientBorderLightFillButton(
-                        text = stringResource(Res.string.produto_lista_botao_limpar_filtros_busca),
-                        vibrantGradient = transparentBrush,
-                        lightGradient = nexpartLightGradientFillBotao,
-                        textColor = Color.DarkGray,
-                        onClick = {
-                            appViewModel.clearAllFilters()
-                            produtoListaViewModel.closeAllDropdownsUiAction()
-                            keyboardController?.hide()
-                            produtoListaViewModel.requestScrollToTop()
-                        },
-                        modifier = Modifier.fillMaxWidth(0.7f).height(44.dp),
-                        cornerRadiusDp = 21.dp,
-                        borderWidth = 0.dp
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(0.90f),
+                        horizontalArrangement = Arrangement.spacedBy(60.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            OutlinedButton(
+                                onClick = { sortDropdownExpanded = true },
+                                modifier = Modifier.fillMaxWidth().height(buttonHeight),
+                                shape = RoundedCornerShape(buttonCornerRadius),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = corDestaqueUnificada),
+                                border = BorderStroke(1.dp, corDestaqueUnificada)
+                            ) {
+                                Text(stringResource(Res.string.button_classify), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium))
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Sort,
+                                    contentDescription = stringResource(Res.string.sort_button_description)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = sortDropdownExpanded,
+                                onDismissRequest = { sortDropdownExpanded = false }
+                            ) {
+                                SortOption.allOptions.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(option.displayNameResource)) },
+                                        onClick = {
+                                            appViewModel.onSortOptionSelected(option)
+                                            sortDropdownExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        GradientBorderLightFillButton(
+                            text = stringResource(Res.string.produto_lista_botao_limpar_filtros),
+                            vibrantGradient = transparentBrush,
+                            lightGradient = nexpartLightGradientFillBotao,
+                            textColor = Color.DarkGray,
+                            textStyle = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center
+                            ),
+                            onClick = {
+                                appViewModel.clearAllFilters()
+                                produtoListaViewModel.closeAllDropdownsUiAction()
+                                keyboardController?.hide()
+                                produtoListaViewModel.requestScrollToTop()
+                            },
+                            modifier = Modifier.weight(1f).fillMaxWidth().height(buttonHeight),
+                            cornerRadiusDp = buttonCornerRadius,
+                            borderWidth = 0.dp
+                        )
+                    }
                     Spacer(Modifier.height(16.dp))
                 }
             }
@@ -329,8 +396,10 @@ fun ProdutoListaScreen(
                     CircularProgressIndicator()
                 }
             } else if (loadErrorMessage != null) {
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text(text = loadErrorMessage!!)
+                loadErrorMessage?.let { safeErrorMessageResource ->
+                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Text(text = stringResource(safeErrorMessageResource))
+                    }
                 }
             } else {
                 if (rawProdutosForDropdowns.isEmpty()) {

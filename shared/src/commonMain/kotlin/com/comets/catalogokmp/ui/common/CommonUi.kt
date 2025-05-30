@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,7 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight // Certifique-se que este import está presente
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,9 +34,14 @@ fun GradientBorderLightFillButton(
     lightGradient: Brush,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    textColor: Color = MaterialTheme.colorScheme.primary,
+    textColor: Color = Color.Black,
     borderWidth: Dp = 2.dp,
-    cornerRadiusDp: Dp = 25.dp
+    cornerRadiusDp: Dp = 25.dp,
+    textStyle: TextStyle = TextStyle(
+        fontSize = 16.sp,
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center
+    )
 ) {
     Box(
         modifier = modifier
@@ -59,9 +64,8 @@ fun GradientBorderLightFillButton(
             Text(
                 text = text,
                 color = textColor,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
+                style = textStyle,
+                textAlign = textStyle.textAlign
             )
         }
     }

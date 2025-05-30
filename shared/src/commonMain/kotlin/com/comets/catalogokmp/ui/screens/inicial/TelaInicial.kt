@@ -58,7 +58,6 @@ fun TelaInicial() {
     val nexpartLightGradient = Brush.horizontalGradient(
         colors = listOf(amareloClarinho, laranjaClarinho, vermelhoClarinho)
     )
-    val textoCorBotoes = Color.Black
 
     Column(
         modifier = Modifier
@@ -97,7 +96,7 @@ fun TelaInicial() {
                 text = stringResource(Res.string.tela_inicial_botao_catalogo),
                 vibrantGradient = nexpartVibrantGradient,
                 lightGradient = nexpartLightGradient,
-                textColor = textoCorBotoes,
+                textColor = Color.Black,
                 onClick = { navigator.push(ProdutoListaVoyagerScreen) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 cornerRadiusDp = 25.dp,
@@ -114,7 +113,7 @@ fun TelaInicial() {
                 text = stringResource(Res.string.tela_inicial_botao_fale_conosco),
                 vibrantGradient = nexpartVibrantGradient,
                 lightGradient = nexpartLightGradient,
-                textColor = textoCorBotoes,
+                textColor = Color.Black,
                 onClick = { navigator.push(FaleConoscoVoyagerScreen) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 cornerRadiusDp = 25.dp,

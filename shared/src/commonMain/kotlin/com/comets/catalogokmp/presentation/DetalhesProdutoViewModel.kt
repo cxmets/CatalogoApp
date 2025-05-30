@@ -7,6 +7,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import catalogokmp.shared.generated.resources.Res
+import catalogokmp.shared.generated.resources.erro_carregar_detalhes_produto
+import catalogokmp.shared.generated.resources.erro_codigo_produto_nao_fornecido
+import catalogokmp.shared.generated.resources.produto_nao_encontrado
 
 class DetalhesProdutoViewModel(
     private val produtoDataSource: ProdutoDataSource,
@@ -23,7 +27,7 @@ class DetalhesProdutoViewModel(
         if (codigoProduto != null) {
             loadProduto(codigoProduto)
         } else {
-            _uiState.value = DetalhesProdutoUiState.Error("Código do produto não fornecido.")
+            _uiState.value = DetalhesProdutoUiState.Error(Res.string.erro_codigo_produto_nao_fornecido)
         }
     }
 
@@ -37,11 +41,11 @@ class DetalhesProdutoViewModel(
                     if (produtoEncontrado != null) {
                         _uiState.value = DetalhesProdutoUiState.Success(produtoEncontrado)
                     } else {
-                        _uiState.value = DetalhesProdutoUiState.Error("Produto não encontrado.")
+                        _uiState.value = DetalhesProdutoUiState.Error(Res.string.produto_nao_encontrado)
                     }
                 },
                 onFailure = {
-                    _uiState.value = DetalhesProdutoUiState.Error("Falha ao carregar detalhes do produto.")
+                    _uiState.value = DetalhesProdutoUiState.Error(Res.string.erro_carregar_detalhes_produto)
                 }
             )
         }

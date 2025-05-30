@@ -2,6 +2,9 @@ package com.comets.catalogokmp.presentation
 
 import com.comets.catalogokmp.data.ProdutoDataSource
 import com.comets.catalogokmp.data.model.Produto
+import com.comets.catalogokmp.model.SortCriteria
+import com.comets.catalogokmp.model.SortDirection
+import com.comets.catalogokmp.model.SortOption
 import com.comets.catalogokmp.util.normalizeForSearch
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.channels.Channel
@@ -14,10 +17,31 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import catalogokmp.shared.generated.resources.Res
+import catalogokmp.shared.generated.resources.falha_carregar_catalogo_produtos
+
+private fun getCodeComparator(): Comparator<String> {
+    return Comparator { s1, s2 ->
+        val n1 = s1.toLongOrNull()
+        val n2 = s2.toLongOrNull()
+
+        if (n1 != null && n2 != null) {
+            n1.compareTo(n2)
+        } else if (n1 != null) {
+            -1
+        } else if (n2 != null) {
+            1
+        } else {
+            s1.compareTo(s2, ignoreCase = true)
+        }
+    }
+}
+
 
 class ProdutoListaViewModel(
     private val produtoDataSource: ProdutoDataSource,
-    appViewModel: AppViewModel // Recebe AppViewModel para ler os estados iniciais dos filtros
+    appViewModel: AppViewModel
 ) : ViewModel() {
 
     private val _rawProdutos = MutableStateFlow<List<Produto>>(emptyList())
@@ -26,15 +50,15 @@ class ProdutoListaViewModel(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _loadError = MutableStateFlow<String?>(null)
-    val loadError: StateFlow<String?> = _loadError.asStateFlow()
+    private val _loadError = MutableStateFlow<StringResource?>(null)
+    val loadError: StateFlow<StringResource?> = _loadError.asStateFlow()
 
-    // Inicializa os estados internos com os valores atuais do AppViewModel
     private val _currentSearchText = MutableStateFlow(appViewModel.searchText.value)
     private val _currentSelectedTipo = MutableStateFlow(appViewModel.selectedTipo.value)
     private val _currentSelectedLente = MutableStateFlow(appViewModel.selectedLente.value)
     private val _currentSelectedHaste = MutableStateFlow(appViewModel.selectedHaste.value)
     private val _currentSelectedRosca = MutableStateFlow(appViewModel.selectedRosca.value)
+    private val _currentSortOption = MutableStateFlow(appViewModel.selectedSortOption.value)
 
     val filteredProdutos: StateFlow<List<Produto>> = combine(
         _rawProdutos,
@@ -42,7 +66,8 @@ class ProdutoListaViewModel(
         _currentSelectedTipo,
         _currentSelectedLente,
         _currentSelectedHaste,
-        _currentSelectedRosca
+        _currentSelectedRosca,
+        _currentSortOption
     ) { values ->
         @Suppress("UNCHECKED_CAST")
         val produtos = values[0] as? List<Produto> ?: emptyList()
@@ -51,11 +76,12 @@ class ProdutoListaViewModel(
         val lente = values[3] as? String ?: ""
         val haste = values[4] as? String ?: ""
         val rosca = values[5] as? String ?: ""
+        val sortOption = values[6] as? SortOption ?: SortOption.DEFAULT
 
         if (_isLoading.value || _loadError.value != null) {
             emptyList<Produto>()
         } else {
-            produtos.filter { produto ->
+            val filteredList = produtos.filter { produto ->
                 val searchMatch = if (searchText.isBlank()) {
                     true
                 } else {
@@ -74,24 +100,45 @@ class ProdutoListaViewModel(
 
                 searchMatch && tipoMatch && lenteMatch && hasteMatch && roscaMatch
             }
+
+            val sortedList = when (sortOption.criteria) {
+                SortCriteria.NAME -> {
+                    if (sortOption.direction == SortDirection.ASC) {
+                        filteredList.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.nome })
+                    } else {
+                        filteredList.sortedWith(compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.nome })
+                    }
+                }
+                SortCriteria.CODE -> {
+                    val codeComparator = getCodeComparator()
+                    if (sortOption.direction == SortDirection.ASC) {
+                        filteredList.sortedWith(compareBy(codeComparator) { it.codigo })
+                    } else {
+                        filteredList.sortedWith(compareByDescending(codeComparator) { it.codigo })
+                    }
+                }
+                SortCriteria.TYPE -> { // Nova classificação por tipo
+                    if (sortOption.direction == SortDirection.ASC) {
+                        filteredList.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.tipo })
+                    } else {
+                        filteredList.sortedWith(compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.tipo })
+                    }
+                }
+            }
+            sortedList
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList<Produto>())
 
     private val _filtrosVisiveis = MutableStateFlow(false)
     val filtrosVisiveis: StateFlow<Boolean> = _filtrosVisiveis.asStateFlow()
-
     private val _expandedTipo = MutableStateFlow(false)
     val expandedTipo: StateFlow<Boolean> = _expandedTipo.asStateFlow()
-
     private val _expandedLente = MutableStateFlow(false)
     val expandedLente: StateFlow<Boolean> = _expandedLente.asStateFlow()
-
     private val _expandedHaste = MutableStateFlow(false)
     val expandedHaste: StateFlow<Boolean> = _expandedHaste.asStateFlow()
-
     private val _expandedRosca = MutableStateFlow(false)
     val expandedRosca: StateFlow<Boolean> = _expandedRosca.asStateFlow()
-
     private val _isProcessingPopBack = MutableStateFlow(false)
     val isProcessingPopBack: StateFlow<Boolean> = _isProcessingPopBack.asStateFlow()
 
@@ -111,15 +158,9 @@ class ProdutoListaViewModel(
             _isLoading.value = true
             _loadError.value = null
             val result = produtoDataSource.getProdutos()
-
             result.fold(
-                onSuccess = { produtos ->
-                    _rawProdutos.value = produtos
-                },
-                onFailure = { error ->
-                    _rawProdutos.value = emptyList()
-                    _loadError.value = "Falha ao carregar catálogo de produtos."
-                }
+                onSuccess = { produtos -> _rawProdutos.value = produtos },
+                onFailure = { _rawProdutos.value = emptyList(); _loadError.value = Res.string.falha_carregar_catalogo_produtos }
             )
             _isLoading.value = false
         }
@@ -155,25 +196,22 @@ class ProdutoListaViewModel(
             requestScrollToTop()
         }
     }
-
-    fun toggleFiltrosVisiveis() { _filtrosVisiveis.value = !_filtrosVisiveis.value }
-
-    private fun closeAllDropdownsInternal() {
-        _expandedTipo.value = false
-        _expandedLente.value = false
-        _expandedHaste.value = false
-        _expandedRosca.value = false
+    fun updateSortOption(sortOption: SortOption) {
+        if (_currentSortOption.value != sortOption) {
+            _currentSortOption.value = sortOption
+            requestScrollToTop()
+        }
     }
 
+    fun toggleFiltrosVisiveis() { _filtrosVisiveis.value = !_filtrosVisiveis.value }
+    private fun closeAllDropdownsInternal() {
+        _expandedTipo.value = false; _expandedLente.value = false; _expandedHaste.value = false; _expandedRosca.value = false
+    }
     fun setExpandedTipo(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedTipo.value = isExpanded }
     fun setExpandedLente(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedLente.value = isExpanded }
     fun setExpandedHaste(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedHaste.value = isExpanded }
     fun setExpandedRosca(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedRosca.value = isExpanded }
-
-    fun closeAllDropdownsUiAction() {
-        closeAllDropdownsInternal()
-    }
-
+    fun closeAllDropdownsUiAction() { closeAllDropdownsInternal() }
     fun setIsProcessingPopBack(isProcessing: Boolean) { _isProcessingPopBack.value = isProcessing }
 
     fun requestScrollToTop() {
