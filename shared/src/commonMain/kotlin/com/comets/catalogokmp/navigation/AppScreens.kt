@@ -1,10 +1,11 @@
 package com.comets.catalogokmp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
-import com.comets.catalogokmp.presentation.AppViewModel // Ainda necessário para ProdutoListaVoyagerScreen
+import com.comets.catalogokmp.presentation.AppViewModel
 import com.comets.catalogokmp.presentation.DetalhesProdutoViewModel
 import com.comets.catalogokmp.presentation.ProdutoListaViewModel
 import com.comets.catalogokmp.ui.screens.detalhesproduto.DetalhesProdutoScreen
@@ -24,10 +25,15 @@ object TelaInicialScreen : Screen {
 
 object ProdutoListaVoyagerScreen : Screen {
     override val key: ScreenKey = uniqueScreenKey
+
     @Composable
     override fun Content() {
         val appViewModel: AppViewModel = koinInject()
         val produtoListaViewModel: ProdutoListaViewModel = koinInject()
+
+        LaunchedEffect(key) {
+            produtoListaViewModel.setScreenTransitioningOut(false)
+        }
 
         ProdutoListaScreen(
             appViewModel = appViewModel,
@@ -37,7 +43,7 @@ object ProdutoListaVoyagerScreen : Screen {
 }
 
 data class DetalhesProdutoVoyagerScreen(val produtoId: String) : Screen {
-    override val key: ScreenKey = uniqueScreenKey
+    override val key: ScreenKey = uniqueScreenKey + produtoId
     @Composable
     override fun Content() {
         val detalhesViewModel: DetalhesProdutoViewModel = koinInject {

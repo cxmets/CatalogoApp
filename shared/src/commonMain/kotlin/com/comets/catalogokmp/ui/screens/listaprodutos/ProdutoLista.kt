@@ -61,7 +61,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -103,8 +102,6 @@ import com.comets.catalogokmp.ui.common.lighten
 import com.comets.catalogokmp.ui.components.ProdutoItem
 import com.comets.catalogokmp.ui.theme.NexpartOrangeClaro
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -128,7 +125,10 @@ fun ProdutoListaScreen(
     val expandedLente by produtoListaViewModel.expandedLente.collectAsState()
     val expandedHaste by produtoListaViewModel.expandedHaste.collectAsState()
     val expandedRosca by produtoListaViewModel.expandedRosca.collectAsState()
-    val isProcessingPopBack by produtoListaViewModel.isProcessingPopBack.collectAsState()
+
+    val isProcessingThisScreenPop by produtoListaViewModel.isProcessingPopBack.collectAsState()
+    val isTransitioningOutToDetails by produtoListaViewModel.isTransitioningOut.collectAsState()
+    val isScreenBusy = isProcessingThisScreenPop || isTransitioningOutToDetails
 
     val searchText by appViewModel.searchText.collectAsState()
     val selectedTipo by appViewModel.selectedTipo.collectAsState()
@@ -156,9 +156,8 @@ fun ProdutoListaScreen(
             when (event) {
                 is ProdutoListaViewModel.UiEvent.ScrollToTop -> {
                     scope.launch {
-                        snapshotFlow { produtoListaViewModel.isLoading.value }
-                            .filter { !it }
-                            .first()
+                        kotlinx.coroutines.delay(50)
+
                         gridState.scrollToItem(0)
                     }
                 }
@@ -226,7 +225,7 @@ fun ProdutoListaScreen(
             ) {
                 IconButton(
                     onClick = {
-                        if (isProcessingPopBack) return@IconButton
+                        if (isScreenBusy) return@IconButton
                         produtoListaViewModel.setIsProcessingPopBack(true)
                         appViewModel.clearAllFilters()
                         appViewModel.onSortOptionSelected(SortOption.DEFAULT)
@@ -333,8 +332,8 @@ fun ProdutoListaScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(0.90f),
-                        horizontalArrangement = Arrangement.spacedBy(60.dp),
+                        modifier = Modifier.fillMaxWidth(0.85f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(modifier = Modifier.weight(1f)) {
@@ -372,10 +371,7 @@ fun ProdutoListaScreen(
                             vibrantGradient = transparentBrush,
                             lightGradient = nexpartLightGradientFillBotao,
                             textColor = Color.DarkGray,
-                            textStyle = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Medium,
-                                textAlign = TextAlign.Center
-                            ),
+                            textStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium, textAlign = TextAlign.Center),
                             onClick = {
                                 appViewModel.clearAllFilters()
                                 produtoListaViewModel.closeAllDropdownsUiAction()
@@ -445,9 +441,13 @@ fun ProdutoListaScreen(
                             ProdutoItem(
                                 produto = produto,
                                 onItemClick = { produtoId ->
-                                    navigator.push(DetalhesProdutoVoyagerScreen(produtoId))
+                                    if (isScreenBusy) return@ProdutoItem
+                                    scope.launch {
+                                        produtoListaViewModel.setScreenTransitioningOut(true)
+                                        navigator.push(DetalhesProdutoVoyagerScreen(produtoId))
+                                    }
                                 },
-                                isNavigatingAway = isProcessingPopBack
+                                isNavigatingAway = isScreenBusy
                             )
                         }
                     }

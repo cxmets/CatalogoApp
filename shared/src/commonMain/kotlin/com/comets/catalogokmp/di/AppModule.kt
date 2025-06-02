@@ -9,7 +9,9 @@ import org.koin.dsl.module
 
 val commonModule = module {
     single<ProdutoDataSource> { ProdutoRepositoryImpl() }
-    single { AppViewModel(produtoDataSource = get()) }
+
+    single { AppViewModel(produtoDataSource = get(), settings = get()) }
+
     factory { ProdutoListaViewModel(produtoDataSource = get(), appViewModel = get()) }
     factory { params ->
         DetalhesProdutoViewModel(

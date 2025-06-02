@@ -16,11 +16,14 @@ lifecycle = "2.9.0"
 sysuicontroller = "0.36.0"
 voyager = "1.1.0-beta03"
 koin = "4.0.4"
+multiPlatformSettings = "1.3.0"
 
 [libraries]
 # Kotlinx
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiPlatformSettings" }
 
 components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "jetbrainsCompose"}
 

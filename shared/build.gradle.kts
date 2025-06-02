@@ -62,6 +62,8 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
 
+                api(libs.multiplatform.settings)
+
                 api(libs.mvvm.core)
                 api(libs.mvvm.compose)
 

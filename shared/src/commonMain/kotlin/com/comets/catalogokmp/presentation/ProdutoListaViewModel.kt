@@ -38,7 +38,6 @@ private fun getCodeComparator(): Comparator<String> {
     }
 }
 
-
 class ProdutoListaViewModel(
     private val produtoDataSource: ProdutoDataSource,
     appViewModel: AppViewModel
@@ -117,7 +116,7 @@ class ProdutoListaViewModel(
                         filteredList.sortedWith(compareByDescending(codeComparator) { it.codigo })
                     }
                 }
-                SortCriteria.TYPE -> { // Nova classificação por tipo
+                SortCriteria.TYPE -> {
                     if (sortOption.direction == SortDirection.ASC) {
                         filteredList.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.tipo })
                     } else {
@@ -131,16 +130,24 @@ class ProdutoListaViewModel(
 
     private val _filtrosVisiveis = MutableStateFlow(false)
     val filtrosVisiveis: StateFlow<Boolean> = _filtrosVisiveis.asStateFlow()
+
     private val _expandedTipo = MutableStateFlow(false)
     val expandedTipo: StateFlow<Boolean> = _expandedTipo.asStateFlow()
+
     private val _expandedLente = MutableStateFlow(false)
     val expandedLente: StateFlow<Boolean> = _expandedLente.asStateFlow()
+
     private val _expandedHaste = MutableStateFlow(false)
     val expandedHaste: StateFlow<Boolean> = _expandedHaste.asStateFlow()
+
     private val _expandedRosca = MutableStateFlow(false)
     val expandedRosca: StateFlow<Boolean> = _expandedRosca.asStateFlow()
+
     private val _isProcessingPopBack = MutableStateFlow(false)
     val isProcessingPopBack: StateFlow<Boolean> = _isProcessingPopBack.asStateFlow()
+
+    private val _isTransitioningOut = MutableStateFlow(false)
+    val isTransitioningOut: StateFlow<Boolean> = _isTransitioningOut.asStateFlow()
 
     private val _uiEvents = Channel<UiEvent>(Channel.BUFFERED)
     val uiEvents: Flow<UiEvent> = _uiEvents.receiveAsFlow()
@@ -159,8 +166,13 @@ class ProdutoListaViewModel(
             _loadError.value = null
             val result = produtoDataSource.getProdutos()
             result.fold(
-                onSuccess = { produtos -> _rawProdutos.value = produtos },
-                onFailure = { _rawProdutos.value = emptyList(); _loadError.value = Res.string.falha_carregar_catalogo_produtos }
+                onSuccess = { produtos ->
+                    _rawProdutos.value = produtos
+                },
+                onFailure = {
+                    _rawProdutos.value = emptyList()
+                    _loadError.value = Res.string.falha_carregar_catalogo_produtos
+                }
             )
             _isLoading.value = false
         }
@@ -204,15 +216,30 @@ class ProdutoListaViewModel(
     }
 
     fun toggleFiltrosVisiveis() { _filtrosVisiveis.value = !_filtrosVisiveis.value }
+
     private fun closeAllDropdownsInternal() {
-        _expandedTipo.value = false; _expandedLente.value = false; _expandedHaste.value = false; _expandedRosca.value = false
+        _expandedTipo.value = false
+        _expandedLente.value = false
+        _expandedHaste.value = false
+        _expandedRosca.value = false
     }
+
     fun setExpandedTipo(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedTipo.value = isExpanded }
     fun setExpandedLente(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedLente.value = isExpanded }
     fun setExpandedHaste(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedHaste.value = isExpanded }
     fun setExpandedRosca(isExpanded: Boolean) { if(isExpanded) closeAllDropdownsInternal(); _expandedRosca.value = isExpanded }
-    fun closeAllDropdownsUiAction() { closeAllDropdownsInternal() }
-    fun setIsProcessingPopBack(isProcessing: Boolean) { _isProcessingPopBack.value = isProcessing }
+
+    fun closeAllDropdownsUiAction() {
+        closeAllDropdownsInternal()
+    }
+
+    fun setIsProcessingPopBack(isProcessing: Boolean) {
+        _isProcessingPopBack.value = isProcessing
+    }
+
+    fun setScreenTransitioningOut(isTransitioning: Boolean) {
+        _isTransitioningOut.value = isTransitioning
+    }
 
     fun requestScrollToTop() {
         _uiEvents.trySend(UiEvent.ScrollToTop)

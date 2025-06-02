@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +74,8 @@ import catalogokmp.shared.generated.resources.tela_fale_conosco_titulo_topbar
 import catalogokmp.shared.generated.resources.text_dark
 import catalogokmp.shared.generated.resources.text_light
 import catalogokmp.shared.generated.resources.voltar
+import com.comets.catalogokmp.model.UserThemePreference
+import com.comets.catalogokmp.presentation.AppViewModel
 import com.comets.catalogokmp.util.AppConstants
 import com.comets.catalogokmp.util.IntentHandler
 import org.jetbrains.compose.resources.painterResource
@@ -83,12 +87,20 @@ import org.koin.compose.koinInject
 fun TelaFaleConoscoScreen() {
     val navigator = LocalNavigator.currentOrThrow
     val intentHandler: IntentHandler = koinInject()
+    val appViewModel: AppViewModel = koinInject()
+    val userThemePreference by appViewModel.userThemePreference.collectAsState()
+    val systemIsDark = isSystemInDarkTheme()
 
     var isProcessingPopBack by remember { mutableStateOf(false) }
-    val systemIsDarkTheme = isSystemInDarkTheme()
 
     val mensagemPadraoWhatsAppResolved = stringResource(Res.string.fale_conosco_mensagem_padrao_whatsapp)
     val assuntoEmailPadraoResolved = stringResource(Res.string.fale_conosco_assunto_email_padrao)
+
+    val currentEffectiveDarkTheme = when (userThemePreference) {
+        UserThemePreference.LIGHT -> false
+        UserThemePreference.DARK -> true
+        UserThemePreference.SYSTEM -> systemIsDark
+    }
 
     Scaffold(
         topBar = {
@@ -132,19 +144,22 @@ fun TelaFaleConoscoScreen() {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val textImageResourceId = if (systemIsDarkTheme) {
+            val textImageResourceId = if (currentEffectiveDarkTheme) {
                 Res.drawable.text_dark
             } else {
                 Res.drawable.text_light
             }
 
+            // Adiciona um Spacer aqui para o espaçamento superior
+            Spacer(modifier = Modifier.height(52.dp)) // Você pode ajustar este valor conforme necessário
+
             Image(
                 painter = painterResource(textImageResourceId),
                 contentDescription = stringResource(Res.string.desc_imagem_texto_nexpart_contato),
                 modifier = Modifier
-                    .fillMaxWidth(1f)
+                    .fillMaxWidth(0.8f)
                     .aspectRatio(1200f / 379f)
-                    .padding(bottom = 28.dp, top = 22.dp),
+                    .padding(bottom = 28.dp), // Removido o top padding daqui, agora controlado pelo Spacer acima
                 contentScale = ContentScale.Fit
             )
 
@@ -229,12 +244,12 @@ fun ContactItem(
             Icon(
                 painter = iconPainter,
                 contentDescription = contentDescription,
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(60.dp),
                 tint = Color.Unspecified
             )
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 17.sp),
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

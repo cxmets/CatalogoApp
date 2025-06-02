@@ -43,7 +43,7 @@
     <string name="fale_conosco_mensagem_padrao_whatsapp">Olá! Gostaria de mais informações.</string>
 
     <string name="sort_button_description">Classificar produtos</string>
-    <string name="button_classify">Classificar</string>
+    <string name="button_classify">Ordenar</string>
     <string name="sort_by_name_asc">Nome (A-Z)</string>
     <string name="sort_by_name_desc">Nome (Z-A)</string>
     <string name="sort_by_code_asc">Código (Crescente)</string>
