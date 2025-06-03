@@ -70,6 +70,9 @@ kotlin {
                 implementation(libs.coil.compose3)
                 implementation(libs.coil.compose3.core)
 
+                api(libs.ktor.client.core)
+                api(libs.coil.network.ktor3)
+
                 implementation(libs.material.icons.extended)
 
                 api(libs.voyager.navigator)

@@ -22,6 +22,18 @@
     <string name="produto_lista_sem_resultados_filtros">Nenhum produto encontrado com os filtros aplicados.</string>
     <string name="produto_lista_sem_produtos_disponiveis">Nenhum produto disponível no memento.</string>
 
+    <string name="similar_criteria_select_title">Selecionar Critérios de Similaridade</string>
+    <string name="similar_criteria_lente">Lente</string>
+    <string name="similar_criteria_haste">Haste</string>
+    <string name="similar_criteria_rosca">Rosca</string>
+    <string name="similar_criteria_confirm">Confirmar</string>
+    <string name="similar_criteria_button_desc">Configurar critérios de similaridade para produtos semelhantes</string>
+    <string name="label_tipo">Tipo</string>
+    <string name="detalhes_produto_config_similar_desc">Configurar critérios de similaridade</string>
+    <string name="dialog_button_cancel">Cancelar</string>
+    <string name="similar_products_icon_desc">Ver produtos semelhantes</string>
+    <string name="similar_products_title">Produtos Semelhantes</string>
+    <string name="no_similar_products">Nenhum produto semelhante com os critérios selecionados foi encontrado.</string>
     <string name="detalhes_produto_desc_imagem_ampliada">Imagem Ampliada</string>
     <string name="detalhes_produto_desc_fechar_zoom">Fechar zoom da imagem</string>
     <string name="tela_fale_conosco_titulo_topbar">Fale Conosco</string>

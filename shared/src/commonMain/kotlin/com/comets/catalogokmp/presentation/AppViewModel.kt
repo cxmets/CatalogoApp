@@ -1,6 +1,7 @@
 package com.comets.catalogokmp.presentation
 
 import com.comets.catalogokmp.data.ProdutoDataSource
+import com.comets.catalogokmp.model.SimilarityCriterionKey
 import com.comets.catalogokmp.model.SortOption
 import com.comets.catalogokmp.model.UserThemePreference
 import com.russhwolf.settings.Settings
@@ -12,6 +13,7 @@ import kotlinx.coroutines.launch
 
 private const val THEME_PREFERENCE_KEY = "user_theme_preference_v1"
 private const val SORT_OPTION_PREFERENCE_KEY = "user_sort_option_preference_v1"
+private const val SIMILARITY_CRITERIA_PREFERENCE_KEY = "user_similarity_criteria_preference_v1"
 
 class AppViewModel(
     private val produtoDataSource: ProdutoDataSource,
@@ -39,12 +41,16 @@ class AppViewModel(
     private val _userThemePreference = MutableStateFlow(UserThemePreference.SYSTEM)
     val userThemePreference: StateFlow<UserThemePreference> = _userThemePreference.asStateFlow()
 
+    private val _userSelectedSimilarityCriteriaKeys = MutableStateFlow(setOf(SimilarityCriterionKey.HASTE))
+    val userSelectedSimilarityCriteriaKeys: StateFlow<Set<SimilarityCriterionKey>> = _userSelectedSimilarityCriteriaKeys.asStateFlow()
+
     init {
         viewModelScope.launch {
             produtoDataSource.getProdutos()
         }
         loadThemePreference()
         loadSortOptionPreference()
+        loadSimilarityCriteriaPreference()
     }
 
     private fun loadThemePreference() {
@@ -76,6 +82,25 @@ class AppViewModel(
         }
     }
 
+    private fun loadSimilarityCriteriaPreference() {
+        val savedCriteriaString = settings.getStringOrNull(SIMILARITY_CRITERIA_PREFERENCE_KEY)
+        if (savedCriteriaString != null && savedCriteriaString.isNotBlank()) {
+            try {
+                val keys = savedCriteriaString.split(',')
+                    .mapNotNull { keyString ->
+                        runCatching { SimilarityCriterionKey.valueOf(keyString.trim()) }.getOrNull()
+                    }
+                    .toSet()
+                _userSelectedSimilarityCriteriaKeys.value = keys.ifEmpty { setOf(SimilarityCriterionKey.HASTE) }
+            } catch (_: Exception) {
+                _userSelectedSimilarityCriteriaKeys.value = setOf(SimilarityCriterionKey.HASTE)
+                settings.remove(SIMILARITY_CRITERIA_PREFERENCE_KEY)
+            }
+        } else {
+            _userSelectedSimilarityCriteriaKeys.value = setOf(SimilarityCriterionKey.HASTE)
+        }
+    }
+
     fun setUserThemePreference(preference: UserThemePreference) {
         _userThemePreference.value = preference
         settings.putString(THEME_PREFERENCE_KEY, preference.name)
@@ -84,6 +109,12 @@ class AppViewModel(
     fun onSortOptionSelected(sortOption: SortOption) {
         _selectedSortOption.value = sortOption
         settings.putString(SORT_OPTION_PREFERENCE_KEY, sortOption.displayNameResource.key)
+    }
+
+    fun updateUserSelectedSimilarityCriteria(newKeys: Set<SimilarityCriterionKey>) {
+        _userSelectedSimilarityCriteriaKeys.value = newKeys
+        val keysAsString = newKeys.joinToString(",") { it.name }
+        settings.putString(SIMILARITY_CRITERIA_PREFERENCE_KEY, keysAsString)
     }
 
     fun onSearchTextChanged(newSearchText: String) { _searchText.value = newSearchText }

@@ -16,7 +16,8 @@ val commonModule = module {
     factory { params ->
         DetalhesProdutoViewModel(
             produtoDataSource = get(),
-            codigoProduto = params.get()
+            currentCodigoProduto = params.get(),
+            appViewModel = get()
         )
     }
 }

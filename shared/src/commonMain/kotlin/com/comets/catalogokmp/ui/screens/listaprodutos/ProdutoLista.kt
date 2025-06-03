@@ -228,7 +228,6 @@ fun ProdutoListaScreen(
                         if (isScreenBusy) return@IconButton
                         produtoListaViewModel.setIsProcessingPopBack(true)
                         appViewModel.clearAllFilters()
-                        appViewModel.onSortOptionSelected(SortOption.DEFAULT)
                         produtoListaViewModel.requestScrollToTop()
                         produtoListaViewModel.closeAllDropdownsUiAction()
                         navigator.pop()
