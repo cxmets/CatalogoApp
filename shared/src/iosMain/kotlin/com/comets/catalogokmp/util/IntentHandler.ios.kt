@@ -4,7 +4,8 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIAlertController
 import platform.UIKit.UIAlertAction
-import platform.UIKit.UIAlertActionStyle
+import platform.UIKit.UIAlertActionStyleDefault
+import platform.UIKit.UIAlertControllerStyleAlert
 import platform.UIKit.UIWindow
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
@@ -13,7 +14,7 @@ actual class IntentHandler {
 
     private fun openUrl(urlString: String): Boolean {
         val url = NSURL(string = urlString)
-        if (url != null && UIApplication.sharedApplication.canOpenURL(url)) {
+        if (UIApplication.sharedApplication.canOpenURL(url)) {
             UIApplication.sharedApplication.openURL(url)
             return true
         }
@@ -41,7 +42,6 @@ actual class IntentHandler {
         val encodedMensagem = mensagemPadrao.encodeForUrl()
         val urlString = "whatsapp://send?phone=$numeroFiltrado&text=$encodedMensagem"
         if (!openUrl(urlString)) {
-            // Fallback para WhatsApp Web se o app não estiver instalado (raro no iOS, mas para consistência)
             val webUrlString = "https://api.whatsapp.com/send?phone=$numeroFiltrado&text=$encodedMensagem"
             if(!openUrl(webUrlString)){
                 showToast("WhatsApp não instalado ou erro ao abrir.")
@@ -56,15 +56,13 @@ actual class IntentHandler {
     }
 
     actual fun abrirInstagram(profileUrl: String) {
-        // Tenta abrir diretamente no app do Instagram
         val appUrlString = profileUrl.replace("https://www.instagram.com/", "instagram://user?username=")
             .removeSuffix("/")
 
         val nsAppUrl = NSURL(string = appUrlString)
-        if (nsAppUrl != null && UIApplication.sharedApplication.canOpenURL(nsAppUrl)) {
+        if (UIApplication.sharedApplication.canOpenURL(nsAppUrl)) {
             UIApplication.sharedApplication.openURL(nsAppUrl)
         } else {
-            // Fallback para abrir no navegador
             if (!openUrl(profileUrl)) {
                 showToast("Não foi possível abrir o Instagram.")
             }
@@ -72,8 +70,6 @@ actual class IntentHandler {
     }
 
     actual fun showToast(message: String) {
-        // Toasts não são nativos do iOS. Usando UIAlertController para feedback simples.
-        // Para uma experiência melhor, uma biblioteca de Toasts ou UI customizada seria ideal.
         dispatch_async(dispatch_get_main_queue()) {
             val window: UIWindow? = UIApplication.sharedApplication.windows.firstOrNull() as? UIWindow
             val rootViewController = window?.rootViewController
@@ -81,22 +77,16 @@ actual class IntentHandler {
                 val alertController = UIAlertController.alertControllerWithTitle(
                     title = null,
                     message = message,
-                    preferredStyle = UIAlertControllerStyle.UIAlertControllerStyleAlert
+                    preferredStyle = UIAlertControllerStyleAlert
                 )
                 alertController.addAction(
                     UIAlertAction.actionWithTitle(
                         title = "OK",
-                        style = UIAlertActionStyle.UIAlertActionStyleDefault,
+                        style = UIAlertActionStyleDefault,
                         handler = null
                     )
                 )
                 rootViewController.presentViewController(alertController, animated = true, completion = null)
-
-                // Auto-dismiss after a delay (optional)
-                // val popTime = dispatch_time(DISPATCH_TIME_NOW, (2 * NSEC_PER_SEC).toLong())
-                // dispatch_after(popTime, dispatch_get_main_queue()) {
-                //     alertController.dismissViewControllerAnimated(true, null)
-                // }
             } else {
                 println("KMP/iOS Toast: $message (RootViewController não encontrado)")
             }
@@ -104,25 +94,13 @@ actual class IntentHandler {
     }
 
     private fun String.encodeForUrl(): String {
-        // Implementação simples de URL encoding. Para casos complexos, usar uma lib ou API nativa mais robusta.
-        return this.replace(" ", "%20")
-            .replace("!", "%21")
-            .replace("#", "%23")
-            .replace("$", "%24")
-            .replace("&", "%26")
-            .replace("'", "%27")
-            .replace("(", "%28")
-            .replace(")", "%29")
-            .replace("*", "%2A")
-            .replace("+", "%2B")
-            .replace(",", "%2C")
-            .replace("/", "%2F")
-            .replace(":", "%3A")
-            .replace(";", "%3B")
-            .replace("=", "%3D")
-            .replace("?", "%3F")
-            .replace("@", "%40")
-            .replace("[", "%5B")
-            .replace("]", "%5D")
+        var encoded = this
+        val charMap = mapOf(
+            " " to "%20", "!" to "%21", "#" to "%23", "$" to "%24", "&" to "%26", "'" to "%27",
+            "(" to "%28", ")" to "%29", "*" to "%2A", "+" to "%2B", "," to "%2C", "/" to "%2F",
+            ":" to "%3A", ";" to "%3B", "=" to "%3D", "?" to "%3F", "@" to "%40", "[" to "%5B", "]" to "%5D"
+        )
+        charMap.forEach { (k, v) -> encoded = encoded.replace(k, v) }
+        return encoded
     }
 }
