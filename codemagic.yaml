@@ -1,0 +1,74 @@
+workflows:
+  kmm-default:
+    name: Kotlin Multiplatform Mobile (iOS+Android)
+    max_build_duration: 60 # minutos
+
+    # 1) defina variáveis de ambiente (ajuste SDK/iOS Deployment Target)
+    environment:
+      vars:
+        IOS_SDK: iphonesimulator14.5
+        SIMULATOR_NAME: "iPhone 12"
+        XCODE_SCHEME: iosApp              # nome do scheme no Xcode
+        IOS_DEPLOYMENT_TARGET: "14.1"     # se precisar forçar
+
+    # 2) dispare em pushes e pull requests
+    triggers:
+      - push
+      - pull_request
+
+    # 3) passos de build
+    scripts:
+      - name: Prepare macOS
+        script: |
+          # atualiza brew e instala CocoaPods (se ainda não vier)
+          brew update
+          brew install cocoapods
+
+      - name: Gradle clean
+        script: |
+          ./gradlew clean
+
+      - name: Build Android App
+        script: |
+          ./gradlew :androidApp:assembleRelease
+
+      - name: Build Kotlin/Native Framework (iOS)
+        script: |
+          # ajusta se seu módulo shared tiver outro path ou target
+          ./gradlew :shared:linkReleaseFrameworkIosX64
+          ./gradlew :shared:linkReleaseFrameworkIosArm64
+
+      - name: Install CocoaPods Dependencies
+        script: |
+          cd iosApp
+          pod repo update
+          pod install --verbose
+
+      - name: Build iOS App
+        script: |
+          cd iosApp
+          xcodebuild \
+            -workspace iosApp.xcworkspace \
+            -scheme "$XCODE_SCHEME" \
+            -sdk "$IOS_SDK" \
+            -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
+            -configuration Release \
+            clean build
+
+    # 4) artefatos que você quer baixar após o build
+    artifacts:
+      # framework gerado pelo shared
+      - shared/build/**/release/shared.framework
+      # app iOS .app ou .ipa
+      - iosApp/build/Release-iphonesimulator/*.app
+      # APK Android
+      - androidApp/app/build/outputs/**/*.apk
+
+    # 5) opções de publicação (se quiser notificar Slack, e-mail etc.)
+    publishing:
+      # exemplo de notificação no Slack
+      slack:
+        webhook_url: Encrypted(...)  # defina no UI do Codemagic
+        channel: "#ci-builds"
+        # somente reports de falha
+        on_build_failed: true
