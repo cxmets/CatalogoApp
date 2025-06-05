@@ -13,7 +13,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.compose.LocalPlatformContext
-import okio.Path.Companion.toPath
+import platform.Foundation.NSBundle
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -32,10 +32,22 @@ actual fun SharedAsyncImage(
                 .build()
         } else {
             try {
-                val resourcePathString: String = Res.getUri("drawable/$imageUrl")
-                resourcePathString.toPath()
+                val relativePathInBundle: String = Res.getUri("drawable/$imageUrl")
+                val mainBundle = NSBundle.mainBundle
+                val fullResourcePath = mainBundle.resourcePath?.let { bundlePath ->
+                    "$bundlePath/$relativePathInBundle"
+                }
+
+                if (fullResourcePath != null) {
+                    ImageRequest.Builder(platformContext)
+                        .data(fullResourcePath)
+                        .build()
+                } else {
+                    println("KMP/iOS: SharedAsyncImage - Não foi possível construir o caminho completo para o recurso local: '$imageUrl'. Caminho relativo: '$relativePathInBundle'")
+                    null
+                }
             } catch (e: Exception) {
-                println("KMP/iOS: Erro ao obter URI/Path para '$imageUrl'. Erro: ${e.message}")
+                println("KMP/iOS: SharedAsyncImage - Erro ao resolver recurso local '$imageUrl'. Erro: ${e.message}")
                 null
             }
         }
@@ -44,14 +56,21 @@ actual fun SharedAsyncImage(
     Box(
         modifier = modifier.background(Color.White)
     ) {
-        AsyncImage(
-            model = imageModel,
-            contentDescription = contentDescription,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = contentScale,
-            onError = { errorResult ->
-                println("KMP/iOS Coil AsyncImage Error para model '$imageModel': ${errorResult.result.throwable.message}")
-            }
-        )
+        if (imageModel != null) {
+            AsyncImage(
+                model = imageModel,
+                contentDescription = contentDescription,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = contentScale,
+                onError = { errorResult ->
+                    println("KMP/iOS Coil AsyncImage Error para model '$imageModel': ${errorResult.result.throwable.message}")
+                    // errorResult.result.throwable?.printStackTrace() // Para um stack trace mais completo no console do Xcode
+                }
+            )
+        } else {
+            // Fallback visual caso imageModel seja nulo (falha ao construir o path/request)
+            Box(modifier = Modifier.fillMaxSize().background(Color.LightGray.copy(alpha = 0.3f)))
+            println("KMP/iOS: SharedAsyncImage - imageModel é nulo para imageUrl: $imageUrl. Exibindo fallback.")
+        }
     }
 }

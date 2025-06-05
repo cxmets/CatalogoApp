@@ -9,6 +9,9 @@ import platform.UIKit.UIAlertControllerStyleAlert
 import platform.UIKit.UIWindow
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
+import platform.Foundation.NSString
+import platform.Foundation.NSCharacterSet
+import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
 
 actual class IntentHandler {
 
@@ -23,7 +26,7 @@ actual class IntentHandler {
     }
 
     actual fun abrirEmail(email: String, assunto: String) {
-        val encodedAssunto = assunto.encodeForUrl()
+        val encodedAssunto = assunto.encodeForUrlQueryParameter()
         val urlString = "mailto:$email?subject=$encodedAssunto"
         if (!openUrl(urlString)) {
             showToast("Não foi possível abrir o app de e-mail.")
@@ -39,7 +42,7 @@ actual class IntentHandler {
 
     actual fun abrirWhatsApp(numeroCompletoComCodigoPais: String, mensagemPadrao: String) {
         val numeroFiltrado = numeroCompletoComCodigoPais.filter { it.isDigit() }
-        val encodedMensagem = mensagemPadrao.encodeForUrl()
+        val encodedMensagem = mensagemPadrao.encodeForUrlQueryParameter()
         val urlString = "whatsapp://send?phone=$numeroFiltrado&text=$encodedMensagem"
         if (!openUrl(urlString)) {
             val webUrlString = "https://api.whatsapp.com/send?phone=$numeroFiltrado&text=$encodedMensagem"
@@ -56,8 +59,8 @@ actual class IntentHandler {
     }
 
     actual fun abrirInstagram(profileUrl: String) {
-        val appUrlString = profileUrl.replace("https://www.instagram.com/", "instagram://user?username=")
-            .removeSuffix("/")
+        val appSchemeUsername = profileUrl.substringAfterLast("instagram.com/").removeSuffix("/")
+        val appUrlString = "instagram://user?username=$appSchemeUsername"
 
         val nsAppUrl = NSURL(string = appUrlString)
         if (UIApplication.sharedApplication.canOpenURL(nsAppUrl)) {
@@ -71,7 +74,10 @@ actual class IntentHandler {
 
     actual fun showToast(message: String) {
         dispatch_async(dispatch_get_main_queue()) {
-            val window: UIWindow? = UIApplication.sharedApplication.windows.firstOrNull() as? UIWindow
+            val window: UIWindow? = UIApplication.sharedApplication.windows.firstOrNull {
+                (it as? UIWindow)?.isKeyWindow() == true
+            } as? UIWindow
+
             val rootViewController = window?.rootViewController
             if (rootViewController != null) {
                 val alertController = UIAlertController.alertControllerWithTitle(
@@ -86,21 +92,20 @@ actual class IntentHandler {
                         handler = null
                     )
                 )
-                rootViewController.presentViewController(alertController, animated = true, completion = null)
+                var presenter = rootViewController
+                while (presenter?.presentedViewController != null) {
+                    presenter = presenter.presentedViewController
+                }
+                presenter?.presentViewController(alertController, animated = true, completion = null)
             } else {
-                println("KMP/iOS Toast: $message (RootViewController não encontrado)")
+                println("KMP/iOS Toast: $message (RootViewController não encontrado ou sem key window)")
             }
         }
     }
 
-    private fun String.encodeForUrl(): String {
-        var encoded = this
-        val charMap = mapOf(
-            " " to "%20", "!" to "%21", "#" to "%23", "$" to "%24", "&" to "%26", "'" to "%27",
-            "(" to "%28", ")" to "%29", "*" to "%2A", "+" to "%2B", "," to "%2C", "/" to "%2F",
-            ":" to "%3A", ";" to "%3B", "=" to "%3D", "?" to "%3F", "@" to "%40", "[" to "%5B", "]" to "%5D"
-        )
-        charMap.forEach { (k, v) -> encoded = encoded.replace(k, v) }
-        return encoded
+    private fun String.encodeForUrlQueryParameter(): String {
+        return (this as NSString).stringByAddingPercentEncodingWithAllowedCharacters(
+            NSCharacterSet.URLQueryAllowedCharacterSet()
+        ) ?: this
     }
 }
