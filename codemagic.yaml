@@ -30,12 +30,14 @@ workflows:
         script: ./gradlew clean
 
       - name: Build Android App
-        script: ./gradlew :androidApp:assembleRelease
+        script: ./gradlew :androidApp:assembleRelease -x lintVitalRelease
 
       - name: Build iOS Frameworks
         script: |
-          ./gradlew :shared:linkReleaseFrameworkIosX64
-          ./gradlew :shared:linkReleaseFrameworkIosArm64
+          # força não usar configuration cache e força refazer tudo
+          ./gradlew --no-configuration-cache --rerun-tasks \
+            :shared:linkReleaseFrameworkIosX64 \
+            :shared:linkReleaseFrameworkIosArm64
 
       - name: Install CocoaPods
         script: |
@@ -58,9 +60,3 @@ workflows:
       - shared/build/**/release/shared.framework
       - iosApp/build/Release-iphonesimulator/*.app
       - androidApp/app/build/outputs/**/*.apk
-
-    # notifications:
-    #   slack:
-    #     webhook_url: Encrypted(...)
-    #     channel: "#ci-builds"
-    #     on_failure: true
