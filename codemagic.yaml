@@ -9,6 +9,7 @@ workflows:
         SIMULATOR_NAME: "iPhone 12"
         XCODE_SCHEME: iosApp
         IOS_DEPLOYMENT_TARGET: "14.1"
+        GRADLE_OPTS: "-Dorg.gradle.unsafe.configuration-cache=false"
 
     triggering:
       events:
