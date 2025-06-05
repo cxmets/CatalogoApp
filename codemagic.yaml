@@ -3,7 +3,6 @@ workflows:
     name: Kotlin Multiplatform Mobile (iOS+Android)
     max_build_duration: 60 # em minutos
 
-    # 1) variáveis de ambiente
     environment:
       vars:
         IOS_SDK: iphonesimulator14.5
@@ -11,12 +10,16 @@ workflows:
         XCODE_SCHEME: iosApp
         IOS_DEPLOYMENT_TARGET: "14.1"
 
-    # 2) eventos que disparam o build
-    trigger:
-      - push
-      - pull_request
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: "*"
+          include: true
+          source: true
+      cancel_previous_builds: true
 
-    # 3) passos de build
     scripts:
       - name: Prepare macOS
         script: |
@@ -51,16 +54,13 @@ workflows:
             -configuration Release \
             clean build
 
-    # 4) artefatos que você quer baixar
     artifacts:
       - shared/build/**/release/shared.framework
       - iosApp/build/Release-iphonesimulator/*.app
       - androidApp/app/build/outputs/**/*.apk
 
-    # 5) (opcional) notificações
     # notifications:
     #   slack:
     #     webhook_url: Encrypted(...)
     #     channel: "#ci-builds"
     #     on_failure: true
-
