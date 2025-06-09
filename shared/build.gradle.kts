@@ -52,12 +52,12 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation(compose.ui)
-                implementation(compose.components.resources)
-                implementation(compose.components.uiToolingPreview)
+                api(compose.runtime)
+                api(compose.foundation)
+                api(compose.material3)
+                api(compose.ui)
+                api(compose.components.resources)
+                api(compose.components.uiToolingPreview)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
@@ -67,8 +67,8 @@ kotlin {
                 api(libs.mvvm.core)
                 api(libs.mvvm.compose)
 
-                implementation(libs.coil.compose3)
-                implementation(libs.coil.compose3.core)
+                api(libs.coil.compose3)
+                api(libs.coil.compose3.core)
 
                 api(libs.ktor.client.core)
                 api(libs.coil.network.ktor3)
@@ -97,9 +97,6 @@ kotlin {
             }
         }
 
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
         val iosMain by creating {
             dependencies {
                 implementation(libs.ktor.client.darwin)

@@ -9,24 +9,21 @@ import platform.UIKit.UIAlertControllerStyleAlert
 import platform.UIKit.UIWindow
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
-import platform.Foundation.NSString
-import platform.Foundation.NSCharacterSet
-import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
+import io.ktor.http.encodeURLQueryComponent // Importa a função de codificação do Ktor
 
 actual class IntentHandler {
 
     private fun openUrl(urlString: String): Boolean {
         val url = NSURL(string = urlString)
-        if (UIApplication.sharedApplication.canOpenURL(url)) {
+        if (url != null && UIApplication.sharedApplication.canOpenURL(url)) {
             UIApplication.sharedApplication.openURL(url)
             return true
         }
-        println("KMP/iOS: Não foi possível abrir a URL: $urlString")
         return false
     }
 
     actual fun abrirEmail(email: String, assunto: String) {
-        val encodedAssunto = assunto.encodeForUrlQueryParameter()
+        val encodedAssunto = assunto.encodeURLQueryComponent() // Usa a função do Ktor
         val urlString = "mailto:$email?subject=$encodedAssunto"
         if (!openUrl(urlString)) {
             showToast("Não foi possível abrir o app de e-mail.")
@@ -42,7 +39,7 @@ actual class IntentHandler {
 
     actual fun abrirWhatsApp(numeroCompletoComCodigoPais: String, mensagemPadrao: String) {
         val numeroFiltrado = numeroCompletoComCodigoPais.filter { it.isDigit() }
-        val encodedMensagem = mensagemPadrao.encodeForUrlQueryParameter()
+        val encodedMensagem = mensagemPadrao.encodeURLQueryComponent() // Usa a função do Ktor
         val urlString = "whatsapp://send?phone=$numeroFiltrado&text=$encodedMensagem"
         if (!openUrl(urlString)) {
             val webUrlString = "https://api.whatsapp.com/send?phone=$numeroFiltrado&text=$encodedMensagem"
@@ -63,7 +60,7 @@ actual class IntentHandler {
         val appUrlString = "instagram://user?username=$appSchemeUsername"
 
         val nsAppUrl = NSURL(string = appUrlString)
-        if (UIApplication.sharedApplication.canOpenURL(nsAppUrl)) {
+        if (nsAppUrl != null && UIApplication.sharedApplication.canOpenURL(nsAppUrl)) {
             UIApplication.sharedApplication.openURL(nsAppUrl)
         } else {
             if (!openUrl(profileUrl)) {
@@ -97,15 +94,7 @@ actual class IntentHandler {
                     presenter = presenter.presentedViewController
                 }
                 presenter?.presentViewController(alertController, animated = true, completion = null)
-            } else {
-                println("KMP/iOS Toast: $message (RootViewController não encontrado ou sem key window)")
             }
         }
-    }
-
-    private fun String.encodeForUrlQueryParameter(): String {
-        return (this as NSString).stringByAddingPercentEncodingWithAllowedCharacters(
-            NSCharacterSet.URLQueryAllowedCharacterSet()
-        ) ?: this
     }
 }

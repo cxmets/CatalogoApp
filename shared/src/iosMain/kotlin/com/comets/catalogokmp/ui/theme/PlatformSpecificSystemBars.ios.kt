@@ -1,18 +1,9 @@
 package com.comets.catalogokmp.ui.theme
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import platform.UIKit.UIApplication
-import platform.UIKit.UIStatusBarStyleDarkContent
-import platform.UIKit.UIStatusBarStyleLightContent
 
 @Composable
 actual fun PlatformSpecificSystemBarsEffect(useDarkTheme: Boolean) {
-    SideEffect {
-        UIApplication.sharedApplication.statusBarStyle = if (useDarkTheme) {
-            UIStatusBarStyleLightContent
-        } else {
-            UIStatusBarStyleDarkContent
-        }
-    }
+    // No-op: Implementação vazia para garantir que o projeto compile.
+    // A cor dos ícones da barra de status será gerenciada pelo sistema no iOS.
 }
