@@ -3,12 +3,13 @@ workflows:
     name: Kotlin Multiplatform Mobile (iOS+Android)
     max_build_duration: 60
 
+    instance_type: mac_mini_m2
+
     environment:
+      xcode: 15.4
       vars:
-        IOS_SDK: iphonesimulator14.5
-        SIMULATOR_NAME: "iPhone 12"
         XCODE_SCHEME: iosApp
-        IOS_DEPLOYMENT_TARGET: "14.1"
+        IOS_DEPLOYMENT_TARGET: "16.0"
         GRADLE_OPTS: "-Xmx4g -Dorg.gradle.unsafe.configuration-cache=false"
 
     triggering:
@@ -44,15 +45,12 @@ workflows:
 
       - name: Build iOS App
         script: |
-          # A etapa 'Build iOS Frameworks' foi removida.
-          # O xcodebuild agora irá chamar o script do Cocoapods que, por sua vez,
-          # chamará o Gradle para construir o framework real.
           cd iosApp
           xcodebuild \
             -workspace iosApp.xcworkspace \
             -scheme "$XCODE_SCHEME" \
-            -sdk "$IOS_SDK" \
-            -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
+            -sdk "iphonesimulator" \
+            -destination "platform=iOS Simulator,name=iPhone 15" \
             -configuration Release \
             clean build
 
