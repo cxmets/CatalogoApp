@@ -1,7 +1,7 @@
 workflows:
   kmm-default:
     name: Kotlin Multiplatform Mobile (iOS+Android)
-    max_build_duration: 60 # em minutos
+    max_build_duration: 60
 
     environment:
       vars:
@@ -33,12 +33,8 @@ workflows:
       - name: Build Android App
         script: ./gradlew :androidApp:assembleRelease -x lintVitalRelease
 
-      - name: Build iOS Frameworks
-        script: |
-          # força não usar configuration cache e força refazer tudo
-          ./gradlew --no-configuration-cache --rerun-tasks \
-            :shared:linkReleaseFrameworkIosX64 \
-            :shared:linkReleaseFrameworkIosArm64
+      - name: Generate dummy iOS framework for CocoaPods
+        script: ./gradlew :shared:generateDummyFramework
 
       - name: Install CocoaPods
         script: |
@@ -48,6 +44,9 @@ workflows:
 
       - name: Build iOS App
         script: |
+          # A etapa 'Build iOS Frameworks' foi removida.
+          # O xcodebuild agora irá chamar o script do Cocoapods que, por sua vez,
+          # chamará o Gradle para construir o framework real.
           cd iosApp
           xcodebuild \
             -workspace iosApp.xcworkspace \
