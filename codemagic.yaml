@@ -58,3 +58,5 @@ workflows:
       - shared/build/**/release/shared.framework
       - iosApp/build/Release-iphonesimulator/*.app
       - androidApp/app/build/outputs/**/*.apk
+      - /Users/builder/Library/Developer/Xcode/DerivedData/**/*.app
+      - app/build/outputs/apk/debug/app-debug.apk
