@@ -1,22 +1,23 @@
 import UIKit
-import shared
+import shared // Importe seu módulo compartilhado
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
+    var window: UIWindow?
+	
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Inicializa o Koin aqui.
+        
+        // Inicia o Koin
         KoinIOSKt.doInitKoin()
+
+        window = UIWindow(frame: UIScreen.main.bounds)
+        
+        // Cria e define o ViewController principal
+        let mainViewController = MainViewControllerKt.MainViewController()
+        window?.rootViewController = mainViewController
+        window?.makeKeyAndVisible()
+        
         return true
-    }
-
-    // MARK: UISceneSession Lifecycle
-
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        // Chamado quando uma nova cena está sendo criada.
-        // Usa a configuração padrão e define o nosso SceneDelegate.
-        let configuration = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-        configuration.delegateClass = SceneDelegate.self
-        return configuration
     }
 }

@@ -1,5 +1,6 @@
 package com.comets.catalogokmp.util
 
+import kotlinx.cinterop.BetaInteropApi
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIAlertController
@@ -9,21 +10,23 @@ import platform.UIKit.UIAlertControllerStyleAlert
 import platform.UIKit.UIWindow
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
-import io.ktor.http.encodeURLQueryComponent // Importa a função de codificação do Ktor
+import platform.Foundation.create
+import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
 
 actual class IntentHandler {
 
     private fun openUrl(urlString: String): Boolean {
         val url = NSURL(string = urlString)
-        if (url != null && UIApplication.sharedApplication.canOpenURL(url)) {
+        if (UIApplication.sharedApplication.canOpenURL(url)) {
             UIApplication.sharedApplication.openURL(url)
             return true
         }
+        println("KMP/iOS: Não foi possível abrir a URL: $urlString")
         return false
     }
 
     actual fun abrirEmail(email: String, assunto: String) {
-        val encodedAssunto = assunto.encodeURLQueryComponent() // Usa a função do Ktor
+        val encodedAssunto = assunto.encodeForUrlQueryParameter()
         val urlString = "mailto:$email?subject=$encodedAssunto"
         if (!openUrl(urlString)) {
             showToast("Não foi possível abrir o app de e-mail.")
@@ -39,7 +42,7 @@ actual class IntentHandler {
 
     actual fun abrirWhatsApp(numeroCompletoComCodigoPais: String, mensagemPadrao: String) {
         val numeroFiltrado = numeroCompletoComCodigoPais.filter { it.isDigit() }
-        val encodedMensagem = mensagemPadrao.encodeURLQueryComponent() // Usa a função do Ktor
+        val encodedMensagem = mensagemPadrao.encodeForUrlQueryParameter()
         val urlString = "whatsapp://send?phone=$numeroFiltrado&text=$encodedMensagem"
         if (!openUrl(urlString)) {
             val webUrlString = "https://api.whatsapp.com/send?phone=$numeroFiltrado&text=$encodedMensagem"
@@ -60,7 +63,7 @@ actual class IntentHandler {
         val appUrlString = "instagram://user?username=$appSchemeUsername"
 
         val nsAppUrl = NSURL(string = appUrlString)
-        if (nsAppUrl != null && UIApplication.sharedApplication.canOpenURL(nsAppUrl)) {
+        if (UIApplication.sharedApplication.canOpenURL(nsAppUrl)) {
             UIApplication.sharedApplication.openURL(nsAppUrl)
         } else {
             if (!openUrl(profileUrl)) {
@@ -94,7 +97,20 @@ actual class IntentHandler {
                     presenter = presenter.presentedViewController
                 }
                 presenter?.presentViewController(alertController, animated = true, completion = null)
+            } else {
+                println("KMP/iOS Toast: $message (RootViewController não encontrado ou sem key window)")
             }
         }
+    }
+
+
+    @OptIn(BetaInteropApi::class)
+    private fun String.encodeForUrlQueryParameter(): String {
+        val allowedChars = platform.Foundation.NSMutableCharacterSet.alphanumericCharacterSet()
+
+        allowedChars.addCharactersInString("-._~")
+
+        val nsString = platform.Foundation.NSString.create(string = this)
+        return nsString.stringByAddingPercentEncodingWithAllowedCharacters(allowedChars) ?: this
     }
 }
